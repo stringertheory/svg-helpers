@@ -14,11 +14,11 @@ def format_attributes(attributes):
     return dict(format_item(k, v) for k, v in attributes.items())
 
 
-def create_svg(**attributes):
+def make_svg(**attributes):
     return svg(**format_attributes(attributes))
 
 
-def create_tag(tag_name, parent, **attributes):
+def add_element(tag_name, parent, **attributes):
     return etree.SubElement(parent, tag_name, **format_attributes(attributes))
 
 
@@ -73,8 +73,8 @@ def make_paths_from_shape(shape):
         raise ValueError(f"{shape} has unknown geom_type {geom_type!r}")
 
 
-def create_tag_from_shape(parent, shape, **attributes):
-    group = create_tag("g", parent, **attributes)
+def add_shape(parent, shape, **attributes):
+    group = add_element("g", parent, **attributes)
     for path in make_paths_from_shape(shape):
-        create_tag("path", group, d=path)
+        add_element("path", group, d=path)
     return group
