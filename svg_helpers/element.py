@@ -79,7 +79,7 @@ class Element(ElementTree.Element):
         sub_element = ElementTree.fromstring(markup)
         self.append(sub_element)
         return sub_element
-    
+
     def add_shape(self, shape, **attributes) -> Element:
         """Add an element as a child to this element. For example:
 
@@ -99,9 +99,22 @@ class Element(ElementTree.Element):
             group.add_element("path", d=path)
         return group
 
-    def to_string(self) -> str:
-        """Write the svg as a string."""
-        return ElementTree.tostring(self, encoding="unicode")
+    def to_string(
+        self, xml_declaration=None, short_empty_elements=True
+    ) -> str:
+        """Generate string representation of the element. All
+        subelements are included.
+
+        This is a convenient way of calling `xml.etree.ElementTree.tostring`.
+
+        """
+        return ElementTree.tostring(
+            self,
+            encoding="unicode",
+            method="xml",
+            xml_declaration=xml_declaration,
+            short_empty_elements=short_empty_elements,
+        )
 
     def __str__(self) -> str:
         return self.to_string()
