@@ -16,6 +16,20 @@ def test_add_element():
     )
 
 
+def test_add_element_from_string():
+    svg = svg_helpers.make_svg(viewBox="0 0 240 40")
+    svg.add_from_string(
+        '<text x="1" y="3" class="hi">'
+        "I <tspan>ain't</tspan> a cat!"
+        "</text>"
+    )
+    assert svg.to_string() == (
+        '<svg viewBox="0 0 240 40">'
+        """<text x="1" y="3" class="hi">I <tspan>ain't</tspan> a cat!</text>"""
+        "</svg>"
+    )
+
+
 def test_add_element_dashed_attributes():
     svg = svg_helpers.make_svg(width=10, height=10)
     svg.add_element("circle", cx=0, cy=0, r=1, stroke_width=1)

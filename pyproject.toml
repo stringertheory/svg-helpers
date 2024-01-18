@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "svg-helpers"
-version = "0.2.0"
+version = "0.3.0"
 description = ""
 authors = ["stringertheory <mike.stringer.internet@gmail.com>"]
 readme = "README.md"

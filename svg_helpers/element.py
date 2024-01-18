@@ -63,6 +63,23 @@ class Element(ElementTree.Element):
         self.append(sub_element)
         return sub_element
 
+    def add_from_string(self, markup: str) -> Element:
+        '''Add an element as a child to this element. For example:
+
+        ```python3
+        parent.add_from_string("""
+        <text x="10" y="30" class="">You are <tspan>not</tspan> a banana!</text>
+        """)
+        ```
+
+        Will add <circle cx="150" cy="100" r="60" /> as a child of the
+        parent element.
+
+        '''
+        sub_element = ElementTree.fromstring(markup)
+        self.append(sub_element)
+        return sub_element
+    
     def add_shape(self, shape, **attributes) -> Element:
         """Add an element as a child to this element. For example:
 
