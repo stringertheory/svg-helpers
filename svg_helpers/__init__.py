@@ -22,10 +22,13 @@ def make_svg(**attributes) -> Element:
 
     ```python3
     svg = make_svg(width=400, height=400, viewBox="0 0 100 100", **{
-        "xmlns": "https://www.w3.org/2000/svg",
         "xmlns:inkscape": "https://www.inkscape.org/namespaces/inkscape",
     })
     ```
 
     """
-    return Element("svg", **attributes)
+    defaults = {
+        "xmlns": "http://www.w3.org/2000/svg",
+    }
+    combined = {**defaults, **attributes}
+    return Element("svg", **combined)

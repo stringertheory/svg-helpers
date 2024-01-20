@@ -8,7 +8,9 @@ def test_add_element_from_point():
     point = shapely.Point(1.5, 1.5)
     svg.add_shape(point)
     assert svg.to_string() == (
-        '<svg width="90" height="90"><g><path d="M1.5,1.5Z" /></g></svg>'
+        '<svg xmlns="http://www.w3.org/2000/svg" width="90" height="90">'
+        '<g><path d="M1.5,1.5Z" /></g>'
+        "</svg>"
     )
 
 
@@ -17,7 +19,7 @@ def test_add_element_from_linestring():
     line = shapely.LineString([(45, 45), (80, 45), (80, 10)])
     svg.add_shape(line)
     assert svg.to_string() == (
-        '<svg width="90" height="90">'
+        '<svg xmlns="http://www.w3.org/2000/svg" width="90" height="90">'
         '<g><path d="M45.0,45.0L80.0,45.0L80.0,10.0" /></g>'
         "</svg>"
     )
@@ -28,7 +30,7 @@ def test_add_element_from_linearring():
     ring = shapely.LinearRing([(45, 45), (80, 45), (80, 10)])
     svg.add_shape(ring)
     assert svg.to_string() == (
-        '<svg width="90" height="90">'
+        '<svg xmlns="http://www.w3.org/2000/svg" width="90" height="90">'
         '<g><path d="M45.0,45.0L80.0,45.0L80.0,10.0L45.0,45.0Z" /></g>'
         "</svg>"
     )
@@ -39,7 +41,7 @@ def test_add_element_from_polygon():
     polygon = shapely.Polygon([(45, 45), (80, 45), (80, 10)])
     svg.add_shape(polygon)
     assert svg.to_string() == (
-        '<svg width="90" height="90">'
+        '<svg xmlns="http://www.w3.org/2000/svg" width="90" height="90">'
         '<g><path d="M45.0,45.0L80.0,45.0L80.0,10.0L45.0,45.0Z" /></g>'
         "</svg>"
     )
@@ -50,7 +52,7 @@ def test_add_element_from_multipoint():
     points = shapely.MultiPoint([[0.0, 0.0], [1.0, 2.0]])
     svg.add_shape(points)
     assert svg.to_string() == (
-        '<svg width="90" height="90"><g>'
+        '<svg xmlns="http://www.w3.org/2000/svg" width="90" height="90"><g>'
         '<path d="M0.0,0.0Z" />'
         '<path d="M1.0,2.0Z" />'
         "</g></svg>"
@@ -62,7 +64,7 @@ def test_add_element_from_multilinestring():
     lines = shapely.MultiLineString([[[0, 0], [1, 2]], [[4, 4], [5, 6]]])
     svg.add_shape(lines)
     assert svg.to_string() == (
-        '<svg width="90" height="90"><g>'
+        '<svg xmlns="http://www.w3.org/2000/svg" width="90" height="90"><g>'
         '<path d="M0.0,0.0L1.0,2.0" />'
         '<path d="M4.0,4.0L5.0,6.0" />'
         "</g></svg>"
@@ -82,7 +84,7 @@ def test_add_element_from_multipolygon():
     )
     svg.add_shape(polygons)
     assert svg.to_string() == (
-        '<svg width="90" height="90"><g>'
+        '<svg xmlns="http://www.w3.org/2000/svg" width="90" height="90"><g>'
         '<path d="M0.0,0.0L0.0,1.0L1.0,1.0L1.0,0.0L0.0,0.0Z'
         'M0.1,0.1L0.1,0.2L0.2,0.2L0.2,0.1L0.1,0.1Z" />'
         '<path d="M45.0,45.0L80.0,45.0L80.0,10.0L45.0,45.0Z" />'
@@ -100,7 +102,7 @@ def test_add_element_from_geometry_collection():
     )
     svg.add_shape(collection)
     assert svg.to_string() == (
-        '<svg width="90" height="90"><g>'
+        '<svg xmlns="http://www.w3.org/2000/svg" width="90" height="90"><g>'
         '<path d="M51.0,-1.0Z" />'
         '<path d="M52.0,-1.0L49.0,2.0" />'
         "</g></svg>"
@@ -119,7 +121,9 @@ def test_add_element_from_empty_shapely_geometry():
     point = shapely.Point()
     svg.add_shape(point)
     assert svg.to_string() == (
-        '<svg width="90" height="90"><g><path d="" /></g></svg>'
+        '<svg xmlns="http://www.w3.org/2000/svg" width="90" height="90">'
+        '<g><path d="" /></g>'
+        "</svg>"
     )
 
 

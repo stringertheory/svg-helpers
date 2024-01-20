@@ -12,8 +12,13 @@ class Element(ElementTree.Element):
 
     """
 
-    def __init__(self, tag: str, **attributes):
-        super().__init__(tag, **self._format_attributes(attributes))
+    def __init__(self, tag: str, attrib={}, **attributes):
+        combined = {**attrib, **attributes}
+        super().__init__(tag, **self._format_attributes(combined))
+
+    def add(self, *args, **kwargs):
+        """Alias for Element.append"""
+        return super().append(*args, **kwargs)
 
     def _format_attributes(self, attributes: dict) -> dict:
         """Replace attributes dictionary with a new one where
@@ -60,9 +65,26 @@ class Element(ElementTree.Element):
 
         """
         sub_element = Element(tag_name, **attributes)
-        self.append(sub_element)
+        self.add(sub_element)
         return sub_element
 
+    @classmethod
+    def from_string(cls, markup) -> Element:
+        """TODO"""
+        parser = ElementTree.XMLParser(
+            target=ElementTree.TreeBuilder(element_factory=cls)
+        )
+        parser.feed(markup)
+        return parser.close()
+
+    @classmethod
+    def from_shape(cls, shape, **attributes) -> Element:
+        """TODO"""
+        group = cls("g", **attributes)
+        for path in make_paths_from_shape(shape):
+            group.add_element("path", d=path)
+        return group
+    
     def add_from_string(self, markup: str) -> Element:
         '''Add an element as a child to this element. For example:
 
@@ -76,8 +98,8 @@ class Element(ElementTree.Element):
         parent element.
 
         '''
-        sub_element = ElementTree.fromstring(markup)
-        self.append(sub_element)
+        sub_element = Element.from_string(markup)
+        self.add(sub_element)
         return sub_element
 
     def add_shape(self, shape, **attributes) -> Element:
@@ -94,13 +116,15 @@ class Element(ElementTree.Element):
         Any type of shapely geometry is accepted.
 
         """
-        group = self.add_element("g", **attributes)
-        for path in make_paths_from_shape(shape):
-            group.add_element("path", d=path)
-        return group
+        sub_element = Element.from_shape(shape, **attributes)
+        self.add(sub_element)
+        return sub_element
 
     def to_string(
-        self, xml_declaration=None, short_empty_elements=True
+        self,
+        pretty=False,
+        xml_declaration=False,
+        short_empty_elements=True,
     ) -> str:
         """Generate string representation of the element. All
         subelements are included.
@@ -108,6 +132,9 @@ class Element(ElementTree.Element):
         This is a convenient way of calling `xml.etree.ElementTree.tostring`.
 
         """
+        if pretty:
+            ElementTree.indent(self)
+
         return ElementTree.tostring(
             self,
             encoding="unicode",
