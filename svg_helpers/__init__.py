@@ -13,7 +13,11 @@ print(svg)
 
 """
 
+from importlib.metadata import version
+
 from svg_helpers.element import Element
+
+__version__ = version("svg-helpers")
 
 
 def make_svg(**attributes) -> Element:

@@ -5,3 +5,11 @@ repos:
       - id: ruff
         args: [--fix]
       - id: ruff-format
+  - repo: local
+    hooks:
+      - id: cog-check
+        name: cog --check README.md
+        entry: uv run cog --check README.md
+        language: system
+        pass_filenames: false
+        files: ^(README\.md|examples/.*\.py)$

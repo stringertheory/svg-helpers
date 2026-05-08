@@ -220,5 +220,30 @@ class Element(ElementTree.Element):
             short_empty_elements=short_empty_elements,
         )
 
+    def save(
+        self,
+        filename,
+        *,
+        pretty=True,
+        xml_declaration=True,
+        short_empty_elements=True,
+    ) -> None:
+        """Write the SVG to a file. For example:
+
+        ```python3
+        svg.save("japan.svg")
+        svg.save("compact.svg", pretty=False, xml_declaration=False)
+        ```
+
+        """
+        with open(filename, "w", encoding="utf-8") as outfile:
+            outfile.write(
+                self.to_string(
+                    pretty=pretty,
+                    xml_declaration=xml_declaration,
+                    short_empty_elements=short_empty_elements,
+                )
+            )
+
     def __str__(self) -> str:
         return self.to_string()

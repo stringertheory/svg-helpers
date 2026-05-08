@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400">
+  <style>
+  .small {
+    font: italic 24px serif;
+  }
+  .small &gt; tspan {
+    font: bold 20px sans-serif;
+    fill: red;
+  }
+</style>
+  <rect width="400" height="400" fill="white" stroke="#eee" />
+  <text x="200.0" y="200.0" text-anchor="middle" class="small">You are <tspan>not</tspan> a banana!</text>
+</svg>

@@ -157,6 +157,26 @@ def test_from_string_chains_underlying_parse_error():
     assert isinstance(info.value.__cause__, ParseError)
 
 
+def test_save_writes_file_with_defaults(tmp_path):
+    svg = svg_helpers.make_svg(width=10, height=10)
+    svg.add_element("rect", x=0, y=0, width=1, height=1)
+    target = tmp_path / "out.svg"
+    svg.save(target)
+    contents = target.read_text(encoding="utf-8")
+    assert contents.startswith("<?xml")  # xml_declaration default is True
+    assert "\n  <rect" in contents  # pretty default is True
+
+
+def test_save_can_override_defaults(tmp_path):
+    svg = svg_helpers.make_svg(width=10, height=10)
+    svg.add_element("rect", x=0, y=0, width=1, height=1)
+    target = tmp_path / "compact.svg"
+    svg.save(target, pretty=False, xml_declaration=False)
+    contents = target.read_text(encoding="utf-8")
+    assert not contents.startswith("<?xml")
+    assert "\n" not in contents  # no indentation, no trailing newline
+
+
 def test_namespaced_parsing_uses_clark_notation():
     # Document a limitation: when xmlns is declared, ElementTree's parser
     # converts namespaced tags to Clark notation ({uri}localname). The

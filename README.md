@@ -7,19 +7,40 @@ with python.
 pip install svg-helpers
 ```
 
+<!-- [[[cog
+def example(name, alt):
+    code = open(f"examples/{name}.py").read().strip()
+    cog.outl("```python")
+    cog.outl(code)
+    cog.outl("```")
+    cog.outl("")
+    cog.outl(
+        f"![{alt}](https://raw.githubusercontent.com/"
+        f"stringertheory/svg-helpers/main/examples/{name}.svg)"
+    )
+]]] -->
+<!-- [[[end]]] -->
+
+<!-- [[[cog example("japan", "Japan flag") ]]] -->
 ```python
+from pathlib import Path
+
 import svg_helpers
 
 width = 150
 height = width * 2 / 3
 r = height * 3 / 10
 
-# this will make a japanese flag:
 svg = svg_helpers.make_svg(width=width, height=height)
-svg.add_element("rect", width=width, height=height, fill="white", stroke="#eee")
-svg.add_element("circle", cx=width/2, cy=height/2, r=r, fill="#bc002d")
-print(svg)
+svg.add_element(
+    "rect", width=width, height=height, fill="white", stroke="#eee"
+)
+svg.add_element("circle", cx=width / 2, cy=height / 2, r=r, fill="#bc002d")
+svg.save(Path(__file__).parent / "japan.svg")
 ```
+
+![Japan flag](https://raw.githubusercontent.com/stringertheory/svg-helpers/main/examples/japan.svg)
+<!-- [[[end]]] -->
 
 Though with something as simple as this, consider just using f-string
 formatting. It can sometimes be difficult to get the quotes right,
@@ -45,7 +66,10 @@ escape Python keywords (`class_="hi"` → `class="hi"`).
 Adding elements from strings can be helpful for text, especially when
 it has `<tspan>` elements in it:
 
+<!-- [[[cog example("banana", "Banana text example") ]]] -->
 ```python
+from pathlib import Path
+
 from svg_helpers import make_svg
 
 size = 400
@@ -55,22 +79,25 @@ svg = make_svg(width=size, height=size)
 svg.add_from_string("""
 <style>
   .small {
-    font: italic 12px serif;
+    font: italic 24px serif;
   }
   .small > tspan {
-    font: bold 10px sans-serif;
+    font: bold 20px sans-serif;
     fill: red;
   }
 </style>
 """)
 svg.add_element("rect", width=size, height=size, fill="white", stroke="#eee")
 svg.add_from_string(
-    f'<text x="{size/2}" y="{size/2}" class="small">'
-    f'You are <tspan>not</tspan> a {noun}!'
-    '</text>'
+    f'<text x="{size / 2}" y="{size / 2}" text-anchor="middle" class="small">'
+    f"You are <tspan>not</tspan> a {noun}!"
+    "</text>"
 )
-print(svg)
+svg.save(Path(__file__).parent / "banana.svg")
 ```
+
+![Banana text example](https://raw.githubusercontent.com/stringertheory/svg-helpers/main/examples/banana.svg)
+<!-- [[[end]]] -->
 
 ## Shapes from shapely
 
@@ -78,8 +105,12 @@ If you have [shapely](https://shapely.readthedocs.io) installed, you
 can pass any geometry directly to `add_shape` and it'll be drawn as
 a `<path>` (or a group of paths for compound shapes):
 
+<!-- [[[cog example("circle", "Circle from shapely") ]]] -->
 ```python
+from pathlib import Path
+
 import shapely
+
 from svg_helpers import make_svg
 
 svg = make_svg(width=200, height=200)
@@ -89,8 +120,11 @@ svg.add_element("rect", width=200, height=200, fill="white")
 circle = shapely.Point(100, 100).buffer(50)
 svg.add_shape(circle, fill="none", stroke="black", stroke_width=2)
 
-print(svg)
+svg.save(Path(__file__).parent / "circle.svg")
 ```
+
+![Circle from shapely](https://raw.githubusercontent.com/stringertheory/svg-helpers/main/examples/circle.svg)
+<!-- [[[end]]] -->
 
 For shapes with many points, pass `precision=N` to round coordinates
 and strip trailing zeros:
@@ -105,14 +139,28 @@ svg.add_shape(big_polygon, precision=2, fill="red")
 `<tspan>` children, with `vertical_align` of `"top"`, `"middle"`, or
 `"bottom"`:
 
+<!-- [[[cog example("text", "Multi-line text example") ]]] -->
 ```python
+from pathlib import Path
+
+from svg_helpers import make_svg
+
+svg = make_svg(width=300, height=200)
+svg.add_element("rect", width=300, height=200, fill="white", stroke="#eee")
 svg.add_text(
     "first line\nsecond line\nthird line",
-    x=100, y=100,
+    x=150,
+    y=100,
     vertical_align="middle",
+    text_anchor="middle",
     font_family="sans-serif",
+    font_size=20,
 )
+svg.save(Path(__file__).parent / "text.svg")
 ```
+
+![Multi-line text example](https://raw.githubusercontent.com/stringertheory/svg-helpers/main/examples/text.svg)
+<!-- [[[end]]] -->
 
 ## Alternatives
 
