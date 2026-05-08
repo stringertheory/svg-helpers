@@ -1,12 +1,35 @@
 [project]
 name = "svg-helpers"
-version = "0.4.0"
-readme = "README.md"
-requires-python = ">=3.10"
+version = "0.4.1"
 authors = [
     {name = "stringertheory", email = "mike.stringer.internet@gmail.com"},
 ]
+description = "Tools to help make SVG graphics with Python."
+readme = "README.md"
+requires-python = ">=3.10"
+keywords = ["svg", "graphics", "xml"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Multimedia :: Graphics",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Text Processing :: Markup :: XML",
+]
+license = "MIT"
+license-files = ["LICEN[CS]E*"]
 dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/stringertheory/svg-helpers"
+Repository = "https://github.com/stringertheory/svg-helpers"
+Issues = "https://github.com/stringertheory/svg-helpers/issues"
 
 [dependency-groups]
 dev = [
