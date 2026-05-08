@@ -1,5 +1,6 @@
 import pytest
 import shapely
+
 import svg_helpers
 
 
@@ -133,4 +134,42 @@ def test_polygon_with_holes():
     small = shapely.Point(125, 100).buffer(50)
     small2 = shapely.Point(50, 150).buffer(20)
     holey_donut = big.difference(small).difference(small2)
-    svg.add_shape(holey_donut, fill="red")
+    g = svg.add_shape(holey_donut, fill="red")
+    paths = g.findall("path")
+    assert len(paths) == 1
+    d = paths[0].get("d")
+    assert d.startswith("M") and d.endswith("Z")
+    assert d.count("M") == 3  # exterior + two holes
+
+
+def test_precision_rounding():
+    svg = svg_helpers.make_svg(width=10, height=10)
+    line = shapely.LineString([(1.123456, 2.987654), (3.111, 4.0)])
+    svg.add_shape(line, precision=2)
+    assert svg.to_string() == (
+        '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10">'
+        '<g><path d="M1.12,2.99L3.11,4" /></g>'
+        "</svg>"
+    )
+
+
+def test_precision_strips_trailing_zeros():
+    svg = svg_helpers.make_svg(width=10, height=10)
+    line = shapely.LineString([(1.0, 2.0), (3.0, 4.0)])
+    svg.add_shape(line, precision=2)
+    assert svg.to_string() == (
+        '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10">'
+        '<g><path d="M1,2L3,4" /></g>'
+        "</svg>"
+    )
+
+
+def test_no_precision_preserves_full_floats():
+    svg = svg_helpers.make_svg(width=10, height=10)
+    line = shapely.LineString([(1.5, 2.5), (3.5, 4.5)])
+    svg.add_shape(line)
+    assert svg.to_string() == (
+        '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10">'
+        '<g><path d="M1.5,2.5L3.5,4.5" /></g>'
+        "</svg>"
+    )

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 from xml.etree import ElementTree
 
 from svg_helpers.shapely_helpers import make_paths_from_shape
@@ -12,8 +12,8 @@ class Element(ElementTree.Element):
 
     """
 
-    def __init__(self, tag: str, attrib={}, **attributes):
-        combined = {**attrib, **attributes}
+    def __init__(self, tag: str, attrib=None, **attributes):
+        combined = {**(attrib or {}), **attributes}
         super().__init__(tag, **self._format_attributes(combined))
 
     def add(self, *args, **kwargs):
@@ -69,40 +69,70 @@ class Element(ElementTree.Element):
         return sub_element
 
     @classmethod
-    def from_string(cls, markup) -> Element:
-        """TODO"""
+    def from_string(cls, markup: str) -> Element:
+        """Parse markup and return a new Element. Companion to
+        `add_from_string` for the times you want the element without
+        appending it to a parent. For example:
+
+        ```python3
+        text = Element.from_string('<text x="10" y="30">hi</text>')
+        ```
+
+        Raises ValueError if the markup can't be parsed.
+
+        """
         parser = ElementTree.XMLParser(
             target=ElementTree.TreeBuilder(element_factory=cls)
         )
-        parser.feed(markup)
-        return parser.close()
+        try:
+            parser.feed(markup)
+            return parser.close()
+        except ElementTree.ParseError as exc:
+            msg = (
+                f"Couldn't parse {markup!r}. "
+                "Do you have quotes around attribute values?"
+            )
+            raise ValueError(msg) from exc
 
     @classmethod
-    def from_shape(cls, shape, **attributes) -> Element:
-        """TODO"""
-        group = cls("g", **attributes)
-        for path in make_paths_from_shape(shape):
-            group.add_element("path", d=path)
-        return group
-    
-    def add_from_string(self, markup: str) -> Element:
-        '''Add an element as a child to this element. For example:
+    def from_shape(cls, shape, *, precision=None, **attributes) -> Element:
+        """Build an Element from a shapely geometry: a `<g>` group with
+        one `<path>` per sub-shape. For example:
 
         ```python3
-        parent.add_from_string("""
-        <text x="10" y="30" class="">You are <tspan>not</tspan> a banana!</text>
-        """)
+        import shapely
+        circle = shapely.Point(0, 0).buffer(10)
+        g = Element.from_shape(circle, fill="none", stroke="black")
         ```
 
-        Will add <circle cx="150" cy="100" r="60" /> as a child of the
-        parent element.
+        Pass `precision` to round coordinates and strip trailing zeros —
+        the output gets noticeably smaller for shapes with many points.
 
-        '''
+        """
+        group = cls("g", **attributes)
+        for path in make_paths_from_shape(shape, precision=precision):
+            group.add_element("path", d=path)
+        return group
+
+    def add_from_string(self, markup: str) -> Element:
+        """Add an element parsed from raw markup as a child. Handy for
+        content with mixed text and tags (e.g. `<text>` with `<tspan>`),
+        where keyword arguments would be awkward. For example:
+
+        ```python3
+        parent.add_from_string(
+            '<text x="10" y="30">You are <tspan>not</tspan> a banana!</text>'
+        )
+        ```
+
+        Raises ValueError if the markup can't be parsed.
+
+        """
         sub_element = Element.from_string(markup)
         self.add(sub_element)
         return sub_element
 
-    def add_shape(self, shape, **attributes) -> Element:
+    def add_shape(self, shape, *, precision=None, **attributes) -> Element:
         """Add an element as a child to this element. For example:
 
         ```python3
@@ -116,9 +146,56 @@ class Element(ElementTree.Element):
         Any type of shapely geometry is accepted.
 
         """
-        sub_element = Element.from_shape(shape, **attributes)
+        sub_element = Element.from_shape(
+            shape, precision=precision, **attributes
+        )
         self.add(sub_element)
         return sub_element
+
+    def add_text(
+        self,
+        text: str,
+        vertical_align: Literal["bottom", "middle", "top"] = "bottom",
+        line_height: float = 1.2,
+        **attributes,
+    ) -> Element:
+        lines = text.split("\n")
+
+        # calculate total height of text block, in em
+        total_height = len(lines) + (len(lines) - 1) * (line_height - 1)
+
+        # calculate dy value to use for the first line
+        if vertical_align == "top":
+            dy = 0.75
+        elif vertical_align == "middle":
+            dy = -total_height / 2 + 0.85
+        elif vertical_align == "bottom":
+            dy = -total_height + 1
+        else:
+            raise ValueError(
+                f"unknown value for vertical_align {vertical_align!r}, "
+                "must be 'top', 'middle', or 'bottom'"
+            )
+
+        # get the x attribute value, to set on each line individually
+        x = attributes.get("x", 0)
+
+        text_element = Element("text", **attributes)
+
+        # use the calculated dy for the first line
+        for line in lines[:1]:
+            text_element.add_from_string(
+                f'<tspan x="{x}" dy="{dy}em">{line}</tspan>'
+            )
+
+        # the rest of the lines are offset using the line height
+        for line in lines[1:]:
+            text_element.add_from_string(
+                f'<tspan x="{x}" dy="{line_height}em">{line}</tspan>'
+            )
+
+        self.add(text_element)
+        return text_element
 
     def to_string(
         self,
