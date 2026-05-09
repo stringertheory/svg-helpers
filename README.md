@@ -67,10 +67,11 @@ it has `<tspan>` elements in it:
 ```python
 from svg_helpers import make_svg
 
-size = 400
+width = 500
+height = 100
 noun = "banana"
 
-svg = make_svg(width=size, height=size)
+svg = make_svg(width=width, height=height)
 svg.add_from_string("""
 <style>
   .small {
@@ -82,9 +83,11 @@ svg.add_from_string("""
   }
 </style>
 """)
-svg.add_element("rect", width=size, height=size, fill="white", stroke="#eee")
+svg.add_element(
+    "rect", width=width, height=height, fill="white", stroke="#eee"
+)
 svg.add_from_string(
-    f'<text x="{size / 2}" y="{size / 2}" text-anchor="middle" class="small">'
+    f'<text x="{width / 2}" y="{height / 2}" text-anchor="middle" class="small">'
     f"You are <tspan>not</tspan> a {noun}!"
     "</text>"
 )
@@ -106,12 +109,14 @@ import shapely
 
 from svg_helpers import make_svg
 
-svg = make_svg(width=200, height=200)
-svg.add_element("rect", width=200, height=200, fill="white")
+svg = make_svg(width=500, height=100)
+svg.add_element("rect", width=500, height=100, fill="white")
 
 # any shapely geometry: Point, LineString, Polygon, MultiPolygon, ...
-circle = shapely.Point(100, 100).buffer(50)
-svg.add_shape(circle, fill="none", stroke="black", stroke_width=2)
+circle_a = shapely.Point(225, 50).buffer(30)
+circle_b = shapely.Point(275, 50).buffer(30)
+shape = circle_a.union(circle_b)
+svg.add_shape(shape, fill="aqua", stroke="navy", stroke_width=5)
 
 svg.save("circle.svg")
 ```

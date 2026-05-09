@@ -2,11 +2,13 @@ import shapely
 
 from svg_helpers import make_svg
 
-svg = make_svg(width=200, height=200)
-svg.add_element("rect", width=200, height=200, fill="white")
+svg = make_svg(width=500, height=100)
+svg.add_element("rect", width=500, height=100, fill="white")
 
 # any shapely geometry: Point, LineString, Polygon, MultiPolygon, ...
-circle = shapely.Point(100, 100).buffer(50)
-svg.add_shape(circle, fill="none", stroke="black", stroke_width=2)
+circle_a = shapely.Point(225, 50).buffer(30)
+circle_b = shapely.Point(275, 50).buffer(30)
+shape = circle_a.union(circle_b)
+svg.add_shape(shape, fill="aqua", stroke="navy", stroke_width=5)
 
 svg.save("circle.svg")
