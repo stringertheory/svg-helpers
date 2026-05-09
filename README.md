@@ -3,10 +3,21 @@
 Tools to help make [SVG](https://en.wikipedia.org/wiki/SVG) graphics
 with python.
 
+## Install
+
 ```bash
 pip install svg-helpers
 ```
 
+## Getting started
+
+The goal is to be as close as is practical to writing
+[SVG](https://developer.mozilla.org/en-US/docs/Web/SVG) directly in
+python.
+
+Start with `make_svg` then add elements with `add_element`. All
+elements have the `add_element` method so they can be nested.
+  
 <!-- [[[cog
 def example(name, alt):
     cog.outl("```python")
@@ -29,10 +40,11 @@ height = width * 2 / 3
 r = height * 3 / 10
 
 svg = svg_helpers.make_svg(width=width, height=height)
-svg.add_element(
+group = svg.add_element("g")
+group.add_element(
     "rect", width=width, height=height, fill="white", stroke="#eee"
 )
-svg.add_element("circle", cx=width / 2, cy=height / 2, r=r, fill="#bc002d")
+group.add_element("circle", cx=width / 2, cy=height / 2, r=r, fill="#bc002d")
 svg.save("japan.svg")
 ```
 
@@ -46,8 +58,10 @@ though.
 ```python
 print(f"""
 <svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}">
-  <rect width="{width}" height="{height}" fill="white" stroke="#eee" />
-  <circle cx="{width/2}" cy="{height/2}" r="{r}" fill="#bc002d" />
+  <g>
+    <rect width="{width}" height="{height}" fill="white" stroke="#eee" />
+    <circle cx="{width/2}" cy="{height/2}" r="{r}" fill="#bc002d" />
+  </g>
 </svg>
 """)
 ```
@@ -162,8 +176,11 @@ svg.save("text.svg")
 
 ## Alternatives
 
-This is really just a few small functions. If you want something more
-comprehensive:
+This library is really just a few functions that wrap the standard
+library `xml.etree`. It doesn't check that what you produce is
+actually valid SVG.
+
+If you want something more fully-featured:
 
 - [svg.py](https://github.com/orsinium-labs/svg.py)
 - [drawsvg](https://github.com/cduck/drawsvg)
@@ -173,17 +190,10 @@ comprehensive:
 
 ## Goals
 
-- friendly syntax that's easy to read and remember. Trying to be as
-  close as is practical to simply writing SVG directly.
-- no baggage. no dependencies. can import just about anywhere, and
-  other projects can import without importing fifteen billion other
-  packages.
-- low maintenance.
-
-## Anti-goals
-
-- comprehensive: it's ok if there are things missing.
-- opinionated: it should not coerce using in a particular way.
+- Friendly syntax that's as close as is practical to writing SVG
+  directly.
+- No dependencies. Can import just about anywhere, and other projects
+  can import it without importing fifteen billion other packages.
 
 ## License
 
