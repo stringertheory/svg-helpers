@@ -1,0 +1,32 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="60">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ff8a3d" />
+      <stop offset="100%" stop-color="#ff3d96" />
+    </linearGradient>
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2" result="blur" />
+      <feOffset in="blur" dx="2" dy="2" result="offset" />
+      <feMerge>
+        <feMergeNode in="offset" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+    <g id="exemplar">
+      <rect x="-12" y="-12" width="24" height="24" fill="url(#grad)" filter="url(#shadow)" />
+      <animateTransform attributeName="transform" type="rotate" from="0" to="360" dur="6s" repeatCount="indefinite" />
+    </g>
+  </defs>
+  <rect fill="#82c8e5" width="600" height="60" />
+  <use href="#exemplar" x="30.0" y="30.0" />
+  <use href="#exemplar" x="90.0" y="30.0" />
+  <use href="#exemplar" x="150.0" y="30.0" />
+  <use href="#exemplar" x="210.0" y="30.0" />
+  <use href="#exemplar" x="270.0" y="30.0" />
+  <use href="#exemplar" x="330.0" y="30.0" />
+  <use href="#exemplar" x="390.0" y="30.0" />
+  <use href="#exemplar" x="450.0" y="30.0" />
+  <use href="#exemplar" x="510.0" y="30.0" />
+  <use href="#exemplar" x="570.0" y="30.0" />
+</svg>

@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.0.dtd">
+  <g inkscape:groupmode="layer" inkscape:label="Background" id="layer-bg">
+    <rect x="0" y="0" width="200" height="200" fill="lightblue" />
+  </g>
+  <g inkscape:groupmode="layer" inkscape:label="Foreground" id="layer-fg">
+    <circle cx="100" cy="100" r="50" fill="orange" />
+  </g>
+</svg>

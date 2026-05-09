@@ -31,7 +31,7 @@ lint:
 	uv run ruff check svg_helpers/ tests/
 
 format:
-	uv run ruff format svg_helpers/ tests/
+	uv run ruff format svg_helpers/ tests/ examples/
 
 check:
 	uv run ruff check svg_helpers/ tests/
@@ -41,8 +41,12 @@ check:
 examples:
 	cd examples && uv run python japan.py
 	cd examples && uv run python banana.py
-	cd examples && uv run python circle.py
+	cd examples && uv run python cloud.py
 	cd examples && uv run python text.py
+	cd examples && uv run python animated.py
+	cd examples && uv run python banner.py
+	cd examples && uv run python make_for_inkscape.py
+	cd examples && uv run python jinja_templates.py
 
 readme: examples
 	uv run cog -r README.md
