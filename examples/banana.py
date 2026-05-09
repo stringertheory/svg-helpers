@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from svg_helpers import make_svg
 
 size = 400
@@ -23,4 +21,4 @@ svg.add_from_string(
     f"You are <tspan>not</tspan> a {noun}!"
     "</text>"
 )
-svg.save(Path(__file__).parent / "banana.svg")
+svg.save("banana.svg")

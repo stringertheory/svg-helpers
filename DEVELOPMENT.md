@@ -37,18 +37,28 @@ references are generated from these scripts via [cog].
 
 To add a new example:
 
-1. Write `examples/my_example.py`. It should `svg.save(Path(__file__).parent / "my_example.svg")` at the end.
-2. Add a section to `README.md` with a cog marker pair:
+1. Write `examples/my_example.py`. It should `svg.save("my_example.svg")` at the end (relative path; the Makefile runs each script with cwd = `examples/`, so the SVG lands next to the script).
+2. Add the script to the `examples:` target in the `Makefile`.
+3. Add a section to `README.md` with a cog marker pair:
    ```markdown
    <!-- [[[cog example("my_example", "Alt text") ]]] -->
    <!-- [[[end]]] -->
    ```
-3. Run `make readme`. This runs all example scripts (regenerating their SVGs) and runs cog (regenerating the code blocks and image references between every marker pair).
-4. Commit the script, the SVG, and the updated README together.
+4. Run `make readme`. This runs all example scripts (regenerating their SVGs) and runs cog (regenerating the code blocks and image references between every marker pair).
+5. Commit the script, the SVG, and the updated README together.
 
 To modify an existing example, edit the script and run `make readme`.
 The pre-commit hook runs `cog --check`; if the README is out of sync
 with any script, the commit fails with a clear message.
+
+The README block is the script content verbatim. There's no transform
+or directive layer — what's in the script is what's in the README.
+Keep scripts short and self-contained for that reason.
+
+If you run a script directly with `python examples/japan.py` from the
+project root (instead of via `make examples`), the SVG will land in
+your cwd rather than in `examples/`. That's a maintainer footgun, not
+a correctness issue — `make examples` always does the right thing.
 
 ## Release flow
 

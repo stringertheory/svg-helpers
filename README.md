@@ -9,9 +9,8 @@ pip install svg-helpers
 
 <!-- [[[cog
 def example(name, alt):
-    code = open(f"examples/{name}.py").read().strip()
     cog.outl("```python")
-    cog.outl(code)
+    cog.outl(open(f"examples/{name}.py").read().strip())
     cog.outl("```")
     cog.outl("")
     cog.outl(
@@ -23,8 +22,6 @@ def example(name, alt):
 
 <!-- [[[cog example("japan", "Japan flag") ]]] -->
 ```python
-from pathlib import Path
-
 import svg_helpers
 
 width = 150
@@ -36,7 +33,7 @@ svg.add_element(
     "rect", width=width, height=height, fill="white", stroke="#eee"
 )
 svg.add_element("circle", cx=width / 2, cy=height / 2, r=r, fill="#bc002d")
-svg.save(Path(__file__).parent / "japan.svg")
+svg.save("japan.svg")
 ```
 
 ![Japan flag](https://raw.githubusercontent.com/stringertheory/svg-helpers/main/examples/japan.svg)
@@ -68,8 +65,6 @@ it has `<tspan>` elements in it:
 
 <!-- [[[cog example("banana", "Banana text example") ]]] -->
 ```python
-from pathlib import Path
-
 from svg_helpers import make_svg
 
 size = 400
@@ -93,7 +88,7 @@ svg.add_from_string(
     f"You are <tspan>not</tspan> a {noun}!"
     "</text>"
 )
-svg.save(Path(__file__).parent / "banana.svg")
+svg.save("banana.svg")
 ```
 
 ![Banana text example](https://raw.githubusercontent.com/stringertheory/svg-helpers/main/examples/banana.svg)
@@ -107,8 +102,6 @@ a `<path>` (or a group of paths for compound shapes):
 
 <!-- [[[cog example("circle", "Circle from shapely") ]]] -->
 ```python
-from pathlib import Path
-
 import shapely
 
 from svg_helpers import make_svg
@@ -120,7 +113,7 @@ svg.add_element("rect", width=200, height=200, fill="white")
 circle = shapely.Point(100, 100).buffer(50)
 svg.add_shape(circle, fill="none", stroke="black", stroke_width=2)
 
-svg.save(Path(__file__).parent / "circle.svg")
+svg.save("circle.svg")
 ```
 
 ![Circle from shapely](https://raw.githubusercontent.com/stringertheory/svg-helpers/main/examples/circle.svg)
@@ -141,8 +134,6 @@ svg.add_shape(big_polygon, precision=2, fill="red")
 
 <!-- [[[cog example("text", "Multi-line text example") ]]] -->
 ```python
-from pathlib import Path
-
 from svg_helpers import make_svg
 
 svg = make_svg(width=300, height=200)
@@ -156,7 +147,7 @@ svg.add_text(
     font_family="sans-serif",
     font_size=20,
 )
-svg.save(Path(__file__).parent / "text.svg")
+svg.save("text.svg")
 ```
 
 ![Multi-line text example](https://raw.githubusercontent.com/stringertheory/svg-helpers/main/examples/text.svg)

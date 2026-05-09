@@ -39,10 +39,10 @@ check:
 	uv run cog --check README.md
 
 examples:
-	uv run python examples/japan.py
-	uv run python examples/banana.py
-	uv run python examples/circle.py
-	uv run python examples/text.py
+	cd examples && uv run python japan.py
+	cd examples && uv run python banana.py
+	cd examples && uv run python circle.py
+	cd examples && uv run python text.py
 
 readme: examples
 	uv run cog -r README.md

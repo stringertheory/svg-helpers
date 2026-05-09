@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from svg_helpers import make_svg
 
 svg = make_svg(width=300, height=200)
@@ -13,4 +11,4 @@ svg.add_text(
     font_family="sans-serif",
     font_size=20,
 )
-svg.save(Path(__file__).parent / "text.svg")
+svg.save("text.svg")
