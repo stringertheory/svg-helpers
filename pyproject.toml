@@ -1,6 +1,6 @@
 [project]
 name = "svg-helpers"
-version = "0.4.1"
+version = "0.5.0"
 authors = [
     {name = "stringertheory", email = "mike.stringer.internet@gmail.com"},
 ]
