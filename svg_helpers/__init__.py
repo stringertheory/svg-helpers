@@ -15,6 +15,7 @@ print(svg)
 
 from importlib.metadata import version
 
+from svg_helpers import recipes  # noqa: F401  (re-exported for users)
 from svg_helpers.element import Element
 
 __version__ = version("svg-helpers")

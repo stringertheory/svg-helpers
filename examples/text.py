@@ -2,7 +2,7 @@ from svg_helpers import make_svg
 
 svg = make_svg(width=300, height=200)
 svg.add_element("rect", width=300, height=200, fill="white", stroke="#eee")
-svg.add_text(
+svg.recipes.add_text(
     "first line\nsecond line\nthird line",
     x=150,
     y=100,

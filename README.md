@@ -165,11 +165,22 @@ and strip trailing zeros:
 svg.add_shape(big_polygon, precision=2, fill="red")
 ```
 
-## Multi-line text
+## Recipes
 
-`add_text` is a convenience for laying out multi-line text using
-`<tspan>` children, with `vertical_align` of `"top"`, `"middle"`, or
-`"bottom"`:
+The `svg_helpers.recipes` module is a grab-bag of higher-level helpers
+for patterns that come up enough to be worth reusing across projects
+(currently just multi-line text). They're reachable via
+`element.recipes.add_<name>(...)` for chaining ergonomics, or by
+importing the underlying `make_<name>` factory directly.
+
+Recipes are opinionated — they make assumptions about font metrics,
+layout, etc. — unlike core, which is mechanism-only. They may change
+or be removed; if you depend on one and want it stable, copy it into
+your project.
+
+`recipes.make_text` (and `parent.recipes.add_text`) lays out multi-line
+text using `<tspan>` children, with `vertical_align` of `"top"`,
+`"middle"`, or `"bottom"`:
 
 <!-- [[[cog example("text", "Multi-line text example") ]]] -->
 ```python
@@ -177,7 +188,7 @@ from svg_helpers import make_svg
 
 svg = make_svg(width=300, height=200)
 svg.add_element("rect", width=300, height=200, fill="white", stroke="#eee")
-svg.add_text(
+svg.recipes.add_text(
     "first line\nsecond line\nthird line",
     x=150,
     y=100,
@@ -340,6 +351,8 @@ If you want something more fully-featured:
   directly.
 - No dependencies. Can import just about anywhere, and other projects
   can import it without importing fifteen billion other packages.
+- Core stays mechanism, not policy. Opinionated helpers live in
+  `svg_helpers.recipes` with a different stability promise.
 
 ## License
 
