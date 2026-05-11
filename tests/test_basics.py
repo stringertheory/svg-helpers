@@ -395,3 +395,23 @@ def test_pretty_still_indents_normal_elements():
     out = svg.to_string(pretty=True)
     assert "\n  <g>" in out
     assert "\n    <rect" in out
+
+
+def test_pretty_on_childless_element_is_unchanged():
+    # The indenter must early-return on a leaf — otherwise it would set
+    # the element's .text to indentation whitespace, breaking output.
+    rect = svg_helpers.Element("rect", width=1, height=1)
+    assert rect.to_string(pretty=True) == '<rect width="1" height="1" />'
+
+
+def test_pretty_handles_namespaced_text_content_elements():
+    # Tags parsed from XML come back in Clark notation ({uri}local) —
+    # the preserve list still matches them so layout is not shifted.
+    # (The serializer prepends a generated `nsN:` prefix on output.)
+    svg = svg_helpers.Element.from_string(
+        '<svg xmlns="http://www.w3.org/2000/svg">'
+        "<text><tspan>A</tspan><tspan>B</tspan></text>"
+        "</svg>"
+    )
+    out = svg.to_string(pretty=True)
+    assert "A</ns0:tspan><ns0:tspan>B" in out

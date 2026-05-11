@@ -52,8 +52,6 @@ def _indent_preserving_text(tree, space="  ", level=0):
     ``xml:space="preserve"``.
 
     """
-    if isinstance(tree, ElementTree.ElementTree):
-        tree = tree.getroot()
     if not len(tree):
         return
 
