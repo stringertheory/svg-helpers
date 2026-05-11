@@ -253,3 +253,16 @@ def test_subclass_format_propagates_to_from_shape_children():
     g = CustomElement.from_shape(shapely.Point(1, 2))
     for child in g:
         assert isinstance(child, CustomElement)
+
+
+def test_add_shape_shape_as_attribute():
+    # The `shape` parameter is positional-only, so passing shape="..."
+    # as a kwarg becomes an attribute on the wrapping <g>.
+    svg = svg_helpers.make_svg(width=10, height=10)
+    svg.add_shape(shapely.Point(1, 2), shape="circle")
+    assert svg.find("g").get("shape") == "circle"
+
+
+def test_from_shape_shape_as_attribute():
+    g = svg_helpers.Element.from_shape(shapely.Point(1, 2), shape="circle")
+    assert g.get("shape") == "circle"

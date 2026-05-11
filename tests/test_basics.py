@@ -328,3 +328,11 @@ def test_readme_xlink_href_invariant():
     b = svg_helpers.make_svg(width=10, height=10)
     b.add_element("use", attrib={"xlink:href": "#circle"})
     assert a.to_string() == b.to_string()
+
+
+def test_add_element_tag_name_as_attribute():
+    # tag_name is positional-only, so a tag-name="..." attribute can be
+    # passed as a kwarg without colliding with the parameter.
+    svg = svg_helpers.make_svg(width=10, height=10)
+    svg.add_element("rect", tag_name="trick")
+    assert svg.find("rect").get("tag-name") == "trick"

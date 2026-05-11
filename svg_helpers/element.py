@@ -55,7 +55,7 @@ class Element(ElementTree.Element):
         """
         return str(value)
 
-    def add_element(self, tag_name: str, **attributes) -> Element:
+    def add_element(self, tag_name: str, /, **attributes) -> Element:
         """Add an element as a child to this element. For example:
 
         ```python3
@@ -64,6 +64,10 @@ class Element(ElementTree.Element):
 
         Will add <circle cx="150" cy="100" r="60" /> as a child of the
         parent element.
+
+        `tag_name` is positional-only so that a kwarg literally named
+        `tag_name` (e.g. for an SVG/HTML attribute of that name) doesn't
+        collide with the parameter.
 
         """
         sub_element = type(self)(tag_name, **attributes)
@@ -103,7 +107,7 @@ class Element(ElementTree.Element):
             raise ValueError(f"couldn't parse {markup!r}: {exc}") from exc
 
     @classmethod
-    def from_shape(cls, shape, *, precision=None, **attributes) -> Element:
+    def from_shape(cls, shape, /, *, precision=None, **attributes) -> Element:
         """Build an Element from a shapely geometry: a `<g>` group with
         one `<path>` per sub-shape. For example:
 
@@ -140,7 +144,7 @@ class Element(ElementTree.Element):
         self.add(sub_element)
         return sub_element
 
-    def add_shape(self, shape, *, precision=None, **attributes) -> Element:
+    def add_shape(self, shape, /, *, precision=None, **attributes) -> Element:
         """Add an element as a child to this element. For example:
 
         ```python3
@@ -163,6 +167,7 @@ class Element(ElementTree.Element):
     def add_text(
         self,
         text: str,
+        /,
         vertical_align: Literal["bottom", "middle", "top"] = "bottom",
         line_height: float = 1.2,
         **attributes,

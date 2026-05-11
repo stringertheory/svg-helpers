@@ -164,3 +164,14 @@ def test_add_text_dy_does_not_have_float_artifacts():
     svg.add_text("a\nb")
     first = svg.find("text").find("tspan")
     assert "0000000000" not in first.get("dy")
+
+
+def test_add_text_text_as_attribute():
+    # The `text` parameter is positional-only, so passing text="..."
+    # as a kwarg becomes an attribute on the <text> element instead
+    # of colliding with the parameter.
+    svg = svg_helpers.make_svg(width=10, height=10)
+    svg.add_text("hello", text="literal")
+    text = svg.find("text")
+    assert text.get("text") == "literal"
+    assert text.find("tspan").text == "hello"
