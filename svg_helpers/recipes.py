@@ -30,8 +30,6 @@ def make_text(
     /,
     vertical_align: Literal["top", "middle", "bottom"] = "bottom",
     line_height: float = 1.2,
-    *,
-    element_class: type[Element] = Element,
     **attributes,
 ) -> Element:
     """Build a `<text>` element with one `<tspan>` per line, laid out
@@ -47,13 +45,6 @@ def make_text(
     text element's `y` coordinate: `"top"` puts the top of the first
     line at `y`; `"middle"` centers the block on `y`; `"bottom"` puts
     the baseline of the last line at `y`.
-
-    `element_class` is the class used to construct the `<text>` and
-    `<tspan>` elements; pass a subclass of `Element` to propagate
-    `format_attribute_name` / `format_attribute_value` overrides to
-    the recipe-built elements. The accessor path
-    (`parent.recipes.add_text(...)`) passes `type(parent)` here
-    automatically.
 
     Special characters in `text` (`<`, `>`, `&`, `"`) are escaped
     automatically because tspans are built directly rather than parsed
@@ -78,14 +69,14 @@ def make_text(
 
     x = attributes.get("x", 0)
 
-    text_element = element_class("text", **attributes)
+    text_element = Element("text", **attributes)
 
-    first_tspan = element_class("tspan", x=x, dy=f"{round(first_dy, 6)}em")
+    first_tspan = Element("tspan", x=x, dy=f"{round(first_dy, 6)}em")
     first_tspan.text = lines[0]
     text_element.append(first_tspan)
 
     for line in lines[1:]:
-        tspan = element_class("tspan", x=x, dy=f"{round(line_height, 6)}em")
+        tspan = Element("tspan", x=x, dy=f"{round(line_height, 6)}em")
         tspan.text = line
         text_element.append(tspan)
 
@@ -107,12 +98,7 @@ class _RecipeAccessor:
         """Build a multi-line text element and append it to the parent.
         See `make_text` for details.
 
-        Propagates the parent's class as `element_class` so subclass
-        overrides of `format_attribute_*` reach the recipe-built
-        `<text>` and `<tspan>` children.
-
         """
-        kwargs.setdefault("element_class", type(self._parent))
         element = make_text(*args, **kwargs)
         self._parent.append(element)
         return element
