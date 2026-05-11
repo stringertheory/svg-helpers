@@ -41,6 +41,44 @@ def test_accessor_and_factory_produce_equivalent_output():
     assert a.to_string() == b.to_string()
 
 
+def test_accessor_propagates_subclass_to_text_and_tspans():
+    # A subclass that overrides format_attribute_name should see its
+    # override applied to <text> and <tspan>s built via the recipe.
+    class CamelCaseElement(svg_helpers.Element):
+        @staticmethod
+        def format_attribute_name(key):
+            return key.rstrip("_")  # leave underscores alone
+
+    svg = CamelCaseElement("svg")
+    svg.recipes.add_text("hi", x=10, y=20, font_family="serif")
+
+    text = svg.find("text")
+    assert isinstance(text, CamelCaseElement)
+    # font_family stays as-is (not converted to font-family) because of
+    # the subclass override.
+    assert text.get("font_family") == "serif"
+    for tspan in text.findall("tspan"):
+        assert isinstance(tspan, CamelCaseElement)
+
+
+def test_make_text_accepts_element_class():
+    # Free-function callers can opt into the same propagation by
+    # passing element_class explicitly.
+    class CamelCaseElement(svg_helpers.Element):
+        @staticmethod
+        def format_attribute_name(key):
+            return key.rstrip("_")
+
+    text = svg_helpers.recipes.make_text(
+        "hi", font_family="serif", element_class=CamelCaseElement
+    )
+    assert isinstance(text, CamelCaseElement)
+    assert text.get("font_family") == "serif"
+    assert all(
+        isinstance(tspan, CamelCaseElement) for tspan in text.findall("tspan")
+    )
+
+
 def test_add_text_single_line_creates_one_tspan():
     svg = svg_helpers.make_svg(width=100, height=100)
     svg.recipes.add_text("hello", x=0, y=10, vertical_align="top")
