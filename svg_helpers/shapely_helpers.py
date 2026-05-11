@@ -1,3 +1,17 @@
+def _validate_precision(precision):
+    if precision is None:
+        return
+    if isinstance(precision, bool) or not isinstance(precision, int):
+        raise TypeError(
+            f"precision must be a non-negative int or None, "
+            f"got {type(precision).__name__}"
+        )
+    if precision < 0:
+        raise ValueError(
+            f"precision must be a non-negative int or None, got {precision}"
+        )
+
+
 def make_path(points, closed=False, precision=None) -> str:
     """Make an svg path value from a list of (x, y) points.
 
@@ -5,29 +19,35 @@ def make_path(points, closed=False, precision=None) -> str:
     places and trailing zeros are stripped (so 80.0 with precision=2 prints
     as "80", not "80.00").
 
+    Extra coordinates per point (e.g. z in (x, y, z)) are ignored, so 3D
+    shapely geometries can be rendered without preprocessing.
+
     """
+    _validate_precision(precision)
+
     if precision is None:
-        result = []
-        iterator = iter(points)
-        for x, y in iterator:
-            result.append(f"M{x},{y}")
-            break
-        for x, y in iterator:
-            result.append(f"L{x},{y}")
+
+        def f(v):
+            return str(v)
+
     else:
 
         def f(v):
             s = f"{v:.{precision}f}"
             return s.rstrip("0").rstrip(".") if "." in s else s
 
-        result = []
-        iterator = iter(points)
-        for x, y in iterator:
-            result.append(f"M{f(x)},{f(y)}")
-            break
-        for x, y in iterator:
-            result.append(f"L{f(x)},{f(y)}")
-    if closed:
+    result = []
+    iterator = iter(points)
+    for point in iterator:
+        x, y, *_ = point
+        result.append(f"M{f(x)},{f(y)}")
+        break
+    for point in iterator:
+        x, y, *_ = point
+        result.append(f"L{f(x)},{f(y)}")
+
+    # Only emit Z if there is a preceding moveto. A bare "Z" is invalid SVG.
+    if closed and result:
         result.append("Z")
     return "".join(result)
 
@@ -53,7 +73,14 @@ def make_path_from_shapely_polygon(polygon, precision=None) -> str:
 
 
 def make_paths_from_shape(shape, precision=None) -> list:
-    """Make a list of svg path values that will draw a geometry."""
+    """Make a list of svg path values that will draw a geometry.
+
+    Empty subgeometries inside multi-geometries and geometry collections
+    are skipped (they would otherwise produce useless `<path d=""/>` nodes).
+
+    """
+    _validate_precision(precision)
+
     try:
         geom_type = shape.geom_type
     except AttributeError as exc:
@@ -72,6 +99,7 @@ def make_paths_from_shape(shape, precision=None) -> list:
         return [
             make_path([(p.x, p.y)], closed=True, precision=precision)
             for p in shape.geoms
+            if not p.is_empty
         ]
     elif geom_type == "LineString":
         return [make_path(shape.coords, closed=False, precision=precision)]
@@ -81,6 +109,7 @@ def make_paths_from_shape(shape, precision=None) -> list:
         return [
             make_path(line.coords, closed=False, precision=precision)
             for line in shape.geoms
+            if not line.is_empty
         ]
     elif geom_type == "Polygon":
         return [make_path_from_shapely_polygon(shape, precision=precision)]
@@ -88,10 +117,13 @@ def make_paths_from_shape(shape, precision=None) -> list:
         return [
             make_path_from_shapely_polygon(p, precision=precision)
             for p in shape.geoms
+            if not p.is_empty
         ]
     elif geom_type == "GeometryCollection":
         result = []
         for sub_shape in shape.geoms:
+            if sub_shape.is_empty:
+                continue
             result.extend(
                 make_paths_from_shape(sub_shape, precision=precision)
             )

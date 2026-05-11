@@ -2,6 +2,7 @@ import pytest
 import shapely
 
 import svg_helpers
+from svg_helpers.shapely_helpers import make_path
 
 
 def test_add_element_from_point():
@@ -173,3 +174,82 @@ def test_no_precision_preserves_full_floats():
         '<g><path d="M1.5,2.5L3.5,4.5" /></g>'
         "</svg>"
     )
+
+
+def test_3d_polygon_via_add_shape():
+    svg = svg_helpers.make_svg(width=10, height=10)
+    poly = shapely.Polygon([(0, 0, 1), (10, 0, 1), (10, 10, 1), (0, 10, 1)])
+    svg.add_shape(poly)
+    out = svg.to_string()
+    assert "0.0,0.0" in out
+    assert "10.0,10.0" in out
+
+
+def test_3d_linestring_via_add_shape():
+    svg = svg_helpers.make_svg(width=10, height=10)
+    line = shapely.LineString([(1, 2, 3), (4, 5, 6)])
+    svg.add_shape(line)
+    out = svg.to_string()
+    assert "1.0,2.0" in out
+    assert "4.0,5.0" in out
+
+
+def test_3d_geometry_collection_via_add_shape():
+    svg = svg_helpers.make_svg(width=10, height=10)
+    poly = shapely.Polygon([(0, 0, 1), (10, 0, 1), (10, 10, 1)])
+    gc = shapely.GeometryCollection([poly])
+    svg.add_shape(gc)
+    assert "0.0,0.0" in svg.to_string()
+
+
+def test_precision_negative_raises_clear_error():
+    svg = svg_helpers.make_svg(width=10, height=10)
+    line = shapely.LineString([(1.5, 2.5), (3.5, 4.5)])
+    with pytest.raises(ValueError, match="precision"):
+        svg.add_shape(line, precision=-1)
+
+
+def test_precision_float_raises_clear_error():
+    svg = svg_helpers.make_svg(width=10, height=10)
+    line = shapely.LineString([(1.5, 2.5), (3.5, 4.5)])
+    with pytest.raises((ValueError, TypeError), match="precision"):
+        svg.add_shape(line, precision=2.5)
+
+
+def test_precision_string_raises_clear_error():
+    svg = svg_helpers.make_svg(width=10, height=10)
+    line = shapely.LineString([(1.5, 2.5), (3.5, 4.5)])
+    with pytest.raises((ValueError, TypeError), match="precision"):
+        svg.add_shape(line, precision="2")
+
+
+def test_make_path_empty_closed_does_not_emit_lone_z():
+    # A bare "Z" with no preceding "M" is invalid SVG path syntax.
+    result = make_path([], closed=True)
+    assert "Z" not in result
+
+
+def test_multipolygon_with_empty_part_skips_empty():
+    # Mixing empty and real shapes inside a collection should not leave
+    # empty <path d=""/> nodes for the empty parts.
+    svg = svg_helpers.make_svg(width=10, height=10)
+    gc = shapely.GeometryCollection(
+        [
+            shapely.LineString(),
+            shapely.Point(1, 2),
+            shapely.Polygon(),
+        ]
+    )
+    svg.add_shape(gc)
+    paths = svg.find("g").findall("path")
+    assert len(paths) == 1
+    assert paths[0].get("d") == "M1.0,2.0Z"
+
+
+def test_subclass_format_propagates_to_from_shape_children():
+    class CustomElement(svg_helpers.Element):
+        pass
+
+    g = CustomElement.from_shape(shapely.Point(1, 2))
+    for child in g:
+        assert isinstance(child, CustomElement)

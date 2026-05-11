@@ -99,3 +99,68 @@ def test_add_text_extra_attributes_appear_on_text_element():
     assert text.get("font-family") == "serif"
     assert text.get("fill") == "red"
     assert text.get("class") == "big"
+
+
+def test_add_text_escapes_ampersand():
+    svg = svg_helpers.make_svg(width=10, height=10)
+    svg.add_text("Joe & Jane", x=10, y=20)
+    assert svg.find("text").find("tspan").text == "Joe & Jane"
+    assert "&amp;" in svg.to_string()
+
+
+def test_add_text_escapes_lt_gt():
+    svg = svg_helpers.make_svg(width=10, height=10)
+    svg.add_text("a < b > c", x=0, y=0)
+    out = svg.to_string()
+    assert "&lt;" in out
+    assert "&gt;" in out
+
+
+def test_add_text_escapes_quotes():
+    svg = svg_helpers.make_svg(width=10, height=10)
+    svg.add_text('say "hi"', x=0, y=0)
+    assert svg.find("text").find("tspan").text == 'say "hi"'
+
+
+def test_add_text_handles_special_chars_with_newlines():
+    svg = svg_helpers.make_svg(width=10, height=10)
+    svg.add_text("line1\nline2 with <strong>")
+    tspans = svg.find("text").findall("tspan")
+    assert len(tspans) == 2
+    assert tspans[1].text == "line2 with <strong>"
+
+
+def test_add_text_trailing_newline_does_not_emit_empty_tspan():
+    svg = svg_helpers.make_svg(width=10, height=10)
+    svg.add_text("hi\n", x=0, y=0)
+    tspans = svg.find("text").findall("tspan")
+    assert len(tspans) == 1
+    assert tspans[0].text == "hi"
+
+
+def test_add_text_carriage_return_line_feed():
+    svg = svg_helpers.make_svg(width=10, height=10)
+    svg.add_text("a\r\nb", x=0, y=0)
+    tspans = svg.find("text").findall("tspan")
+    assert [t.text for t in tspans] == ["a", "b"]
+
+
+def test_add_text_blank_line_in_middle_preserved():
+    svg = svg_helpers.make_svg(width=10, height=10)
+    svg.add_text("a\n\nb", x=0, y=0)
+    tspans = svg.find("text").findall("tspan")
+    assert [t.text for t in tspans] == ["a", "", "b"]
+
+
+def test_add_text_has_docstring():
+    assert svg_helpers.Element.add_text.__doc__ is not None
+    assert len(svg_helpers.Element.add_text.__doc__.strip()) > 20
+
+
+def test_add_text_dy_does_not_have_float_artifacts():
+    # Without rounding, default vertical_align produces a dy of
+    # "-1.2000000000000002em" — full float-precision noise.
+    svg = svg_helpers.make_svg(width=10, height=10)
+    svg.add_text("a\nb")
+    first = svg.find("text").find("tspan")
+    assert "0000000000" not in first.get("dy")

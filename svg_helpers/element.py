@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy as _copy
 from typing import Any, Literal
 from xml.etree import ElementTree
 
@@ -36,7 +37,8 @@ class Element(ElementTree.Element):
     def format_attribute_name(key: str) -> str:
         """Replace underscores in passed attribute names with dashes
         in the svg element. For example, `stroke_width` becomes
-        `stroke-width`.
+        `stroke-width`. A trailing underscore is stripped first to
+        allow escaping Python keywords (`class_` becomes `class`).
 
         Override the method to format attribute names differently.
 
@@ -64,7 +66,7 @@ class Element(ElementTree.Element):
         parent element.
 
         """
-        sub_element = Element(tag_name, **attributes)
+        sub_element = type(self)(tag_name, **attributes)
         self.add(sub_element)
         return sub_element
 
@@ -81,18 +83,24 @@ class Element(ElementTree.Element):
         Raises ValueError if the markup can't be parsed.
 
         """
+
+        def factory(tag, attrib_dict):
+            # Bypass __init__ formatting for parsed attributes — the
+            # names came straight from XML, so they're already in
+            # canonical form. Running format_attribute_name on them
+            # would silently rewrite e.g. `class_` → `class`.
+            element = cls.__new__(cls)
+            ElementTree.Element.__init__(element, tag, attrib_dict)
+            return element
+
         parser = ElementTree.XMLParser(
-            target=ElementTree.TreeBuilder(element_factory=cls)
+            target=ElementTree.TreeBuilder(element_factory=factory)
         )
         try:
             parser.feed(markup)
             return parser.close()
         except ElementTree.ParseError as exc:
-            msg = (
-                f"Couldn't parse {markup!r}. "
-                "Do you have quotes around attribute values?"
-            )
-            raise ValueError(msg) from exc
+            raise ValueError(f"couldn't parse {markup!r}: {exc}") from exc
 
     @classmethod
     def from_shape(cls, shape, *, precision=None, **attributes) -> Element:
@@ -128,7 +136,7 @@ class Element(ElementTree.Element):
         Raises ValueError if the markup can't be parsed.
 
         """
-        sub_element = Element.from_string(markup)
+        sub_element = type(self).from_string(markup)
         self.add(sub_element)
         return sub_element
 
@@ -146,7 +154,7 @@ class Element(ElementTree.Element):
         Any type of shapely geometry is accepted.
 
         """
-        sub_element = Element.from_shape(
+        sub_element = type(self).from_shape(
             shape, precision=precision, **attributes
         )
         self.add(sub_element)
@@ -159,40 +167,54 @@ class Element(ElementTree.Element):
         line_height: float = 1.2,
         **attributes,
     ) -> Element:
-        lines = text.split("\n")
+        """Add a `<text>` element with one `<tspan>` per line, laid out
+        vertically using `dy` offsets.
 
-        # calculate total height of text block, in em
+        `text` is split on line terminators (`\\n`, `\\r\\n`, `\\r`); a
+        single trailing newline is treated as a terminator (no empty
+        tspan), but blank lines in the middle are preserved.
+
+        `vertical_align` controls where the text block sits relative to
+        the text element's `y` coordinate: `"top"` puts the top of the
+        first line at `y`; `"middle"` centers the block on `y`;
+        `"bottom"` puts the baseline of the last line at `y`.
+
+        Special characters in `text` (`<`, `>`, `&`, `"`) are escaped
+        automatically because tspans are built directly rather than
+        parsed from a string.
+
+        """
+        # splitlines handles \r, \n, \r\n uniformly and drops a single
+        # trailing terminator. Empty input collapses to one empty line.
+        lines = text.splitlines() or [""]
+
+        # total height of the text block, in em
         total_height = len(lines) + (len(lines) - 1) * (line_height - 1)
 
-        # calculate dy value to use for the first line
         if vertical_align == "top":
-            dy = 0.75
+            first_dy = 0.75
         elif vertical_align == "middle":
-            dy = -total_height / 2 + 0.85
+            first_dy = -total_height / 2 + 0.85
         elif vertical_align == "bottom":
-            dy = -total_height + 1
+            first_dy = -total_height + 1
         else:
             raise ValueError(
                 f"unknown value for vertical_align {vertical_align!r}, "
                 "must be 'top', 'middle', or 'bottom'"
             )
 
-        # get the x attribute value, to set on each line individually
         x = attributes.get("x", 0)
 
-        text_element = Element("text", **attributes)
+        text_element = type(self)("text", **attributes)
 
-        # use the calculated dy for the first line
-        for line in lines[:1]:
-            text_element.add_from_string(
-                f'<tspan x="{x}" dy="{dy}em">{line}</tspan>'
-            )
+        first_tspan = type(self)("tspan", x=x, dy=f"{round(first_dy, 6)}em")
+        first_tspan.text = lines[0]
+        text_element.add(first_tspan)
 
-        # the rest of the lines are offset using the line height
         for line in lines[1:]:
-            text_element.add_from_string(
-                f'<tspan x="{x}" dy="{line_height}em">{line}</tspan>'
-            )
+            tspan = type(self)("tspan", x=x, dy=f"{round(line_height, 6)}em")
+            tspan.text = line
+            text_element.add(tspan)
 
         self.add(text_element)
         return text_element
@@ -210,7 +232,24 @@ class Element(ElementTree.Element):
 
         """
         if pretty:
-            ElementTree.indent(self)
+            # ElementTree.indent mutates text/tail in place. Snapshot
+            # those two fields per node and restore in `finally` so
+            # serialization is non-destructive. Faster than deepcopy,
+            # but not thread-safe for concurrent reads of the same tree.
+            saved = [(el, el.text, el.tail) for el in self.iter()]
+            try:
+                ElementTree.indent(self)
+                return ElementTree.tostring(
+                    self,
+                    encoding="unicode",
+                    method="xml",
+                    xml_declaration=xml_declaration,
+                    short_empty_elements=short_empty_elements,
+                )
+            finally:
+                for el, text, tail in saved:
+                    el.text = text
+                    el.tail = tail
 
         return ElementTree.tostring(
             self,
@@ -228,7 +267,9 @@ class Element(ElementTree.Element):
         xml_declaration=True,
         short_empty_elements=True,
     ) -> None:
-        """Write the SVG to a file. For example:
+        """Write the SVG to a file. `filename` may be a path-like
+        object or an open text-mode file object with a `.write` method.
+        For example:
 
         ```python3
         svg.save("japan.svg")
@@ -236,14 +277,36 @@ class Element(ElementTree.Element):
         ```
 
         """
+        content = self.to_string(
+            pretty=pretty,
+            xml_declaration=xml_declaration,
+            short_empty_elements=short_empty_elements,
+        )
+        if hasattr(filename, "write"):
+            filename.write(content)
+            return
         with open(filename, "w", encoding="utf-8") as outfile:
-            outfile.write(
-                self.to_string(
-                    pretty=pretty,
-                    xml_declaration=xml_declaration,
-                    short_empty_elements=short_empty_elements,
-                )
-            )
+            outfile.write(content)
+
+    def __copy__(self) -> Element:
+        clone = type(self).__new__(type(self))
+        ElementTree.Element.__init__(clone, self.tag, dict(self.attrib))
+        clone.text = self.text
+        clone.tail = self.tail
+        for child in self:
+            clone.append(child)
+        return clone
+
+    def __deepcopy__(self, memo) -> Element:
+        clone = type(self).__new__(type(self))
+        ElementTree.Element.__init__(
+            clone, self.tag, _copy.deepcopy(self.attrib, memo)
+        )
+        clone.text = self.text
+        clone.tail = self.tail
+        for child in self:
+            clone.append(_copy.deepcopy(child, memo))
+        return clone
 
     def __str__(self) -> str:
         return self.to_string()

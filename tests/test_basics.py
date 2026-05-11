@@ -1,3 +1,6 @@
+import copy
+import io
+
 import pytest
 
 import svg_helpers
@@ -145,7 +148,10 @@ def test_class_keyword_escape():
 
 
 def test_from_string_raises_value_error_with_hint():
-    with pytest.raises(ValueError, match="quotes"):
+    # The error message includes the underlying parser diagnostic so
+    # the user can tell unquoted attributes apart from e.g. malformed
+    # tags or multiple root elements.
+    with pytest.raises(ValueError, match="not well-formed"):
         svg_helpers.Element.from_string("<text x=10>hi</text>")
 
 
@@ -194,3 +200,131 @@ def test_namespaced_parsing_uses_clark_notation():
     assert "{http://" not in out  # Clark notation gets resolved on output
     assert "inkscape:layer" not in out  # original prefix not preserved
     assert "layer" in out  # local name survives
+
+
+def test_from_string_error_message_contains_underlying_cause():
+    # Multi-root failure used to wrongly suggest "quotes around values".
+    with pytest.raises(ValueError) as info:
+        svg_helpers.Element.from_string("<g/><g/>")
+    msg = str(info.value)
+    assert "junk" in msg.lower() or "document" in msg.lower()
+
+
+def test_from_string_empty_input_error_message():
+    with pytest.raises(ValueError) as info:
+        svg_helpers.Element.from_string("")
+    msg = str(info.value)
+    # Should not give the misleading "quotes" hint for empty input.
+    assert "no element" in msg.lower() or "empty" in msg.lower()
+
+
+def test_from_string_does_not_rewrite_underscore_attr_names():
+    # Parsed XML attribute names are already in canonical form;
+    # format_attribute_name (kwargs-style) must not run on them.
+    e = svg_helpers.Element.from_string(
+        '<rect class_="foo" data_value_="1" />'
+    )
+    assert e.get("class_") == "foo"
+    assert e.get("data_value_") == "1"
+
+
+def test_pretty_does_not_mutate_text():
+    svg = svg_helpers.make_svg(width=10, height=10)
+    g = svg.add_element("g")
+    g.add_element("rect")
+    assert g.text is None
+    svg.to_string(pretty=True)
+    assert g.text is None
+
+
+def test_pretty_then_compact_round_trip():
+    svg = svg_helpers.make_svg(width=10, height=10)
+    g = svg.add_element("g")
+    g.add_element("rect")
+    fresh_compact = svg.to_string(pretty=False)
+    svg.to_string(pretty=True)  # used to permanently inject whitespace
+    assert svg.to_string(pretty=False) == fresh_compact
+
+
+def test_save_does_not_mutate_tree(tmp_path):
+    svg = svg_helpers.make_svg(width=10, height=10)
+    svg.add_element("rect")
+    expected_compact = svg.to_string(pretty=False)
+    svg.save(tmp_path / "out.svg")  # default pretty=True
+    assert svg.to_string(pretty=False) == expected_compact
+
+
+def test_save_to_string_io():
+    svg = svg_helpers.make_svg(width=10, height=10)
+    svg.add_element("rect")
+    buf = io.StringIO()
+    svg.save(buf, pretty=False, xml_declaration=False)
+    assert "<svg" in buf.getvalue()
+    assert "<rect" in buf.getvalue()
+
+
+def test_save_to_path_object(tmp_path):
+    import pathlib
+
+    svg = svg_helpers.make_svg(width=10, height=10)
+    svg.add_element("rect")
+    target = pathlib.Path(tmp_path) / "out.svg"
+    svg.save(target)
+    assert "<rect" in target.read_text()
+
+
+def test_copy_preserves_subclass():
+    svg = svg_helpers.make_svg(width=10, height=10)
+    svg.add_element("rect")
+    clone = copy.copy(svg)
+    assert isinstance(clone, svg_helpers.Element)
+    assert clone.to_string() == svg.to_string()
+
+
+def test_deepcopy_preserves_subclass():
+    svg = svg_helpers.make_svg(width=10, height=10)
+    g = svg.add_element("g")
+    g.add_element("rect")
+    clone = copy.deepcopy(svg)
+    assert isinstance(clone, svg_helpers.Element)
+    for descendant in clone.iter():
+        assert isinstance(descendant, svg_helpers.Element)
+    assert clone.to_string() == svg.to_string()
+
+
+def test_deepcopy_is_independent():
+    svg = svg_helpers.make_svg(width=10, height=10)
+    rect = svg.add_element("rect", fill="red")
+    clone = copy.deepcopy(svg)
+    rect.set("fill", "blue")
+    assert clone.find("rect").get("fill") == "red"
+
+
+def test_subclass_format_propagates_to_add_element_children():
+    class CamelCaseElement(svg_helpers.Element):
+        @staticmethod
+        def format_attribute_name(key):
+            return key.rstrip("_")  # don't transform underscores
+
+    svg = CamelCaseElement("svg")
+    svg.add_element("rect", stroke_width=1)
+    assert svg.find("rect").get("stroke_width") == "1"
+
+
+def test_add_element_returns_subclass_type():
+    class MyElement(svg_helpers.Element):
+        pass
+
+    root = MyElement("svg")
+    child = root.add_element("g")
+    assert isinstance(child, MyElement)
+
+
+def test_readme_xlink_href_invariant():
+    # The README claims **dict and attrib=dict produce identical output
+    # for non-Python-identifier attribute names.
+    a = svg_helpers.make_svg(width=10, height=10)
+    a.add_element("use", **{"xlink:href": "#circle"})
+    b = svg_helpers.make_svg(width=10, height=10)
+    b.add_element("use", attrib={"xlink:href": "#circle"})
+    assert a.to_string() == b.to_string()
