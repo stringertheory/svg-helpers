@@ -19,6 +19,12 @@ PRESERVE_INNER_WHITESPACE_TAGS = frozenset(
 
 _XML_SPACE_ATTR = "{http://www.w3.org/XML/1998/namespace}space"
 
+# Empirical dy offsets (in em) for add_text's vertical_align modes.
+# Assume typical sans-serif font metrics; display fonts or unusual
+# scripts may misalign visibly.
+_FIRST_LINE_DY_TOP_EM = 0.75
+_FIRST_LINE_DY_MIDDLE_OFFSET_EM = 0.85
+
 
 def _local_tag(tag):
     """Strip a Clark-notation namespace prefix from a tag name."""
@@ -84,8 +90,10 @@ def _indent_preserving_text(tree, space="  ", level=0):
 
 
 class Element(ElementTree.Element):
-    """Wrapper around `xml.etree.ElementTree.Element`, that adds a few
-    convenience methods: `to_string`, `add_element`, and `add_shape`.
+    """Wrapper around `xml.etree.ElementTree.Element` with convenience
+    methods for building SVG: `add_element`, `add_from_string`,
+    `add_shape`, `add_text`, `from_string`, `from_shape`, `to_string`,
+    `save`.
 
     """
 
@@ -257,7 +265,7 @@ class Element(ElementTree.Element):
         self,
         text: str,
         /,
-        vertical_align: Literal["bottom", "middle", "top"] = "bottom",
+        vertical_align: Literal["top", "middle", "bottom"] = "bottom",
         line_height: float = 1.2,
         **attributes,
     ) -> Element:
@@ -286,9 +294,9 @@ class Element(ElementTree.Element):
         total_height = len(lines) + (len(lines) - 1) * (line_height - 1)
 
         if vertical_align == "top":
-            first_dy = 0.75
+            first_dy = _FIRST_LINE_DY_TOP_EM
         elif vertical_align == "middle":
-            first_dy = -total_height / 2 + 0.85
+            first_dy = -total_height / 2 + _FIRST_LINE_DY_MIDDLE_OFFSET_EM
         elif vertical_align == "bottom":
             first_dy = -total_height + 1
         else:
