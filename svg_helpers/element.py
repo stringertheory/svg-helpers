@@ -84,11 +84,13 @@ def _indent_preserving_text(tree, space="  ", level=0):
 class Element(ElementTree.Element):
     """Wrapper around `xml.etree.ElementTree.Element` with convenience
     methods for building SVG: `add_element`, `add_from_string`,
-    `add_shape`, `from_string`, `from_shape`, `to_string`, `save`.
+    `add_shape`, `to_string`, `save`.
 
-    Higher-level helpers (multi-line text, etc.) live in
-    `svg_helpers.recipes` and are reachable via the `recipes` property:
-    `element.recipes.add_text(...)`.
+    The public API is "always add to the tree": create one root with
+    `make_svg(...)`, then build everything else by calling `add_*`
+    methods on a parent. Higher-level helpers (multi-line text, etc.)
+    live in `svg_helpers.recipes` and are reachable via the `recipes`
+    property: `element.recipes.add_text(...)`.
 
     """
 
@@ -167,16 +169,10 @@ class Element(ElementTree.Element):
         return sub_element
 
     @classmethod
-    def from_string(cls, markup: str) -> Element:
-        """Parse markup and return a new Element. Companion to
-        `add_from_string` for the times you want the element without
-        appending it to a parent. For example:
-
-        ```python3
-        text = Element.from_string('<text x="10" y="30">hi</text>')
-        ```
-
-        Raises ValueError if the markup can't be parsed.
+    def _from_string(cls, markup: str) -> Element:
+        """Parse markup and return a new Element. Internal helper used
+        by `add_from_string`; not part of the public API. Raises
+        ValueError if the markup can't be parsed.
 
         """
 
@@ -199,18 +195,10 @@ class Element(ElementTree.Element):
             raise ValueError(f"couldn't parse {markup!r}: {exc}") from exc
 
     @classmethod
-    def from_shape(cls, shape, /, *, precision=None, **attributes) -> Element:
-        """Build an Element from a shapely geometry: a `<g>` group with
-        one `<path>` per sub-shape. For example:
-
-        ```python3
-        import shapely
-        circle = shapely.Point(0, 0).buffer(10)
-        g = Element.from_shape(circle, fill="none", stroke="black")
-        ```
-
-        Pass `precision` to round coordinates and strip trailing zeros —
-        the output gets noticeably smaller for shapes with many points.
+    def _from_shape(cls, shape, /, *, precision=None, **attributes) -> Element:
+        """Build a `<g>` group with one `<path>` per sub-shape of a
+        shapely geometry. Internal helper used by `add_shape`; not part
+        of the public API.
 
         """
         group = cls("g", **attributes)
@@ -232,7 +220,7 @@ class Element(ElementTree.Element):
         Raises ValueError if the markup can't be parsed.
 
         """
-        sub_element = type(self).from_string(markup)
+        sub_element = type(self)._from_string(markup)
         self.append(sub_element)
         return sub_element
 
@@ -250,7 +238,7 @@ class Element(ElementTree.Element):
         Any type of shapely geometry is accepted.
 
         """
-        sub_element = type(self).from_shape(
+        sub_element = type(self)._from_shape(
             shape, precision=precision, **attributes
         )
         self.append(sub_element)

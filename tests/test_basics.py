@@ -152,14 +152,14 @@ def test_from_string_raises_value_error_with_hint():
     # the user can tell unquoted attributes apart from e.g. malformed
     # tags or multiple root elements.
     with pytest.raises(ValueError, match="not well-formed"):
-        svg_helpers.Element.from_string("<text x=10>hi</text>")
+        svg_helpers.Element._from_string("<text x=10>hi</text>")
 
 
 def test_from_string_chains_underlying_parse_error():
     from xml.etree.ElementTree import ParseError
 
     with pytest.raises(ValueError) as info:
-        svg_helpers.Element.from_string("<not-closed>")
+        svg_helpers.Element._from_string("<not-closed>")
     assert isinstance(info.value.__cause__, ParseError)
 
 
@@ -193,7 +193,7 @@ def test_namespaced_parsing_uses_clark_notation():
         "<inkscape:layer />"
         "</root>"
     )
-    parsed = svg_helpers.Element.from_string(markup)
+    parsed = svg_helpers.Element._from_string(markup)
     layer = list(parsed)[0]
     assert layer.tag == "{http://www.inkscape.org/namespaces/inkscape}layer"
     out = parsed.to_string()
@@ -205,14 +205,14 @@ def test_namespaced_parsing_uses_clark_notation():
 def test_from_string_error_message_contains_underlying_cause():
     # Multi-root failure used to wrongly suggest "quotes around values".
     with pytest.raises(ValueError) as info:
-        svg_helpers.Element.from_string("<g/><g/>")
+        svg_helpers.Element._from_string("<g/><g/>")
     msg = str(info.value)
     assert "junk" in msg.lower() or "document" in msg.lower()
 
 
 def test_from_string_empty_input_error_message():
     with pytest.raises(ValueError) as info:
-        svg_helpers.Element.from_string("")
+        svg_helpers.Element._from_string("")
     msg = str(info.value)
     # Should not give the misleading "quotes" hint for empty input.
     assert "no element" in msg.lower() or "empty" in msg.lower()
@@ -221,7 +221,7 @@ def test_from_string_empty_input_error_message():
 def test_from_string_does_not_rewrite_underscore_attr_names():
     # Parsed XML attribute names are already in canonical form;
     # format_attribute_name (kwargs-style) must not run on them.
-    e = svg_helpers.Element.from_string(
+    e = svg_helpers.Element._from_string(
         '<rect class_="foo" data_value_="1" />'
     )
     assert e.get("class_") == "foo"
@@ -408,7 +408,7 @@ def test_pretty_handles_namespaced_text_content_elements():
     # Tags parsed from XML come back in Clark notation ({uri}local) —
     # the preserve list still matches them so layout is not shifted.
     # (The serializer prepends a generated `nsN:` prefix on output.)
-    svg = svg_helpers.Element.from_string(
+    svg = svg_helpers.Element._from_string(
         '<svg xmlns="http://www.w3.org/2000/svg">'
         "<text><tspan>A</tspan><tspan>B</tspan></text>"
         "</svg>"

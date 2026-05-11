@@ -250,7 +250,7 @@ def test_subclass_format_propagates_to_from_shape_children():
     class CustomElement(svg_helpers.Element):
         pass
 
-    g = CustomElement.from_shape(shapely.Point(1, 2))
+    g = CustomElement._from_shape(shapely.Point(1, 2))
     for child in g:
         assert isinstance(child, CustomElement)
 
@@ -264,5 +264,5 @@ def test_add_shape_shape_as_attribute():
 
 
 def test_from_shape_shape_as_attribute():
-    g = svg_helpers.Element.from_shape(shapely.Point(1, 2), shape="circle")
+    g = svg_helpers.Element._from_shape(shapely.Point(1, 2), shape="circle")
     assert g.get("shape") == "circle"

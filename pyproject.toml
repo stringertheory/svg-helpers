@@ -1,6 +1,6 @@
 [project]
 name = "svg-helpers"
-version = "0.6.2"
+version = "1.0.0"
 authors = [
     {name = "stringertheory", email = "mike.stringer.internet@gmail.com"},
 ]
@@ -9,7 +9,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 keywords = ["svg", "graphics", "xml"]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
