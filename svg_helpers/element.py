@@ -6,6 +6,82 @@ from xml.etree import ElementTree
 
 from svg_helpers.shapely_helpers import make_paths_from_shape
 
+# SVG elements whose inter-child whitespace is rendered as a literal
+# space character per the XML default whitespace rules. Indenting
+# inside one of these shifts visible text layout (e.g. a half-space
+# per chunk under text-anchor="middle"), so pretty-printing must leave
+# their contents untouched. From SVG 1.1 §10.10 ("Text content
+# elements") plus `foreignObject` (whose contents are non-SVG markup
+# where whitespace also matters).
+PRESERVE_INNER_WHITESPACE_TAGS = frozenset(
+    {"text", "tspan", "textPath", "tref", "altGlyph", "foreignObject"}
+)
+
+_XML_SPACE_ATTR = "{http://www.w3.org/XML/1998/namespace}space"
+
+
+def _local_tag(tag):
+    """Strip a Clark-notation namespace prefix from a tag name."""
+    if isinstance(tag, str) and tag.startswith("{"):
+        return tag.split("}", 1)[1]
+    return tag
+
+
+def _preserve_inner_whitespace(elem):
+    if _local_tag(elem.tag) in PRESERVE_INNER_WHITESPACE_TAGS:
+        return True
+    # xml:space="preserve" is the spec-defined escape hatch — check
+    # both the Clark-notation form (used by the parser) and the bare
+    # form (used by direct kwargs).
+    return (
+        elem.get(_XML_SPACE_ATTR) == "preserve"
+        or elem.get("xml:space") == "preserve"
+    )
+
+
+def _indent_preserving_text(tree, space="  ", level=0):
+    """Like ``xml.etree.ElementTree.indent`` but does not insert
+    whitespace inside elements whose layout depends on character data
+    (text, tspan, textPath, foreignObject, ...) or that opt out via
+    ``xml:space="preserve"``.
+
+    """
+    if isinstance(tree, ElementTree.ElementTree):
+        tree = tree.getroot()
+    if not len(tree):
+        return
+
+    indentations = ["\n" + level * space]
+
+    def walk(elem, level):
+        if _preserve_inner_whitespace(elem):
+            return
+
+        child_level = level + 1
+        try:
+            child_indentation = indentations[child_level]
+        except IndexError:
+            child_indentation = indentations[level] + space
+            indentations.append(child_indentation)
+
+        if not elem.text or not elem.text.strip():
+            elem.text = child_indentation
+
+        last_child = None
+        for child in elem:
+            if len(child):
+                walk(child, child_level)
+            if not child.tail or not child.tail.strip():
+                child.tail = child_indentation
+            last_child = child
+
+        if last_child is not None and (
+            not last_child.tail or not last_child.tail.strip()
+        ):
+            last_child.tail = indentations[level]
+
+    walk(tree, level)
+
 
 class Element(ElementTree.Element):
     """Wrapper around `xml.etree.ElementTree.Element`, that adds a few
@@ -254,13 +330,13 @@ class Element(ElementTree.Element):
 
         """
         if pretty:
-            # ElementTree.indent mutates text/tail in place. Snapshot
+            # The custom indenter mutates text/tail in place. Snapshot
             # those two fields per node and restore in `finally` so
             # serialization is non-destructive. Faster than deepcopy,
             # but not thread-safe for concurrent reads of the same tree.
             saved = [(el, el.text, el.tail) for el in self.iter()]
             try:
-                ElementTree.indent(self)
+                _indent_preserving_text(self)
                 return ElementTree.tostring(
                     self,
                     encoding="unicode",

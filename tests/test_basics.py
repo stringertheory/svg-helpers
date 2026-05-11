@@ -356,3 +356,42 @@ def test_bool_false_becomes_lowercase_false():
     svg = svg_helpers.make_svg(width=10, height=10)
     svg.add_element("animate", repeatCount=False)
     assert svg.find("animate").get("repeatCount") == "false"
+
+
+def test_pretty_does_not_indent_inside_text():
+    # XML default whitespace rules: indentation inside <text> renders as
+    # a literal space, shifting visible layout. The custom indenter must
+    # leave text-content children adjacent.
+    svg = svg_helpers.make_svg(width=10, height=10)
+    text = svg.add_element("text")
+    text.add_element("tspan").text = "A"
+    text.add_element("tspan").text = "B"
+    assert "</tspan><tspan>" in svg.to_string(pretty=True)
+
+
+def test_pretty_does_not_indent_inside_textpath():
+    svg = svg_helpers.make_svg(width=10, height=10)
+    text = svg.add_element("text")
+    textpath = text.add_element("textPath", href="#p")
+    textpath.add_element("tspan").text = "X"
+    textpath.add_element("tspan").text = "Y"
+    assert "</tspan><tspan>" in svg.to_string(pretty=True)
+
+
+def test_pretty_respects_xml_space_preserve():
+    # The escape hatch lets users opt any element out of indenting,
+    # including ones outside the hardcoded text-content list.
+    svg = svg_helpers.make_svg(width=10, height=10)
+    custom = svg.add_element("future-element", **{"xml:space": "preserve"})
+    custom.add_element("child").text = "A"
+    custom.add_element("child").text = "B"
+    assert "</child><child>" in svg.to_string(pretty=True)
+
+
+def test_pretty_still_indents_normal_elements():
+    svg = svg_helpers.make_svg(width=10, height=10)
+    g = svg.add_element("g")
+    g.add_element("rect")
+    out = svg.to_string(pretty=True)
+    assert "\n  <g>" in out
+    assert "\n    <rect" in out
