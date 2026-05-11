@@ -93,10 +93,6 @@ class Element(ElementTree.Element):
         combined = {**(attrib or {}), **attributes}
         super().__init__(tag, **self._format_attributes(combined))
 
-    def add(self, *args, **kwargs):
-        """Alias for Element.append"""
-        return super().append(*args, **kwargs)
-
     def _format_attributes(self, attributes: dict) -> dict:
         """Replace attributes dictionary with a new one where
         attribute names (keys) and attribute values (values) have been
@@ -164,7 +160,7 @@ class Element(ElementTree.Element):
 
         """
         sub_element = type(self)(tag_name, **attributes)
-        self.add(sub_element)
+        self.append(sub_element)
         return sub_element
 
     @classmethod
@@ -234,7 +230,7 @@ class Element(ElementTree.Element):
 
         """
         sub_element = type(self).from_string(markup)
-        self.add(sub_element)
+        self.append(sub_element)
         return sub_element
 
     def add_shape(self, shape, /, *, precision=None, **attributes) -> Element:
@@ -254,7 +250,7 @@ class Element(ElementTree.Element):
         sub_element = type(self).from_shape(
             shape, precision=precision, **attributes
         )
-        self.add(sub_element)
+        self.append(sub_element)
         return sub_element
 
     def add_text(
@@ -307,14 +303,14 @@ class Element(ElementTree.Element):
 
         first_tspan = type(self)("tspan", x=x, dy=f"{round(first_dy, 6)}em")
         first_tspan.text = lines[0]
-        text_element.add(first_tspan)
+        text_element.append(first_tspan)
 
         for line in lines[1:]:
             tspan = type(self)("tspan", x=x, dy=f"{round(line_height, 6)}em")
             tspan.text = line
-            text_element.add(tspan)
+            text_element.append(tspan)
 
-        self.add(text_element)
+        self.append(text_element)
         return text_element
 
     def to_string(
