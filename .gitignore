@@ -3,6 +3,7 @@
 .DS_Store
 .pytest_cache/
 .venv/
+.venvs/
 *.egg-info/
 *.pyc
 __pycache__/

@@ -1,7 +1,9 @@
 # SVG helpers
 
+[![PyPI](https://img.shields.io/pypi/v/svg-helpers.svg)](https://pypi.org/project/svg-helpers/)
+
 Tools to help make [SVG](https://en.wikipedia.org/wiki/SVG) graphics
-with python.
+with python. No dependencies — safe to import just about anywhere.
 
 ## Install
 

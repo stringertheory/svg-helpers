@@ -333,7 +333,10 @@ class Element(ElementTree.Element):
         if hasattr(filename, "write"):
             filename.write(content)
             return
-        with open(filename, "w", encoding="utf-8") as outfile:
+        # newline="" disables platform newline translation so saved
+        # files use \n everywhere — Windows otherwise rewrites \n to \r\n
+        # on disk, producing cross-platform diff churn.
+        with open(filename, "w", encoding="utf-8", newline="") as outfile:
             outfile.write(content)
 
     def __copy__(self) -> Element:

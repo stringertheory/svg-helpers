@@ -13,3 +13,9 @@ repos:
         language: system
         pass_filenames: false
         files: ^(README\.md|examples/.*\.py)$
+      - id: pytest
+        name: pytest
+        entry: uv run pytest -q
+        language: system
+        pass_filenames: false
+        types: [python]

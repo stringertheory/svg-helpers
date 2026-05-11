@@ -1,8 +1,11 @@
-.PHONY: help install test cov lint format check examples readme readme-check version bump-patch bump-minor bump-major clean build publish
+.PHONY: help install test test-all cov lint format check examples readme readme-check version bump-patch bump-minor bump-major clean build publish
+
+PYTHON_VERSIONS := 3.10 3.11 3.12 3.13 3.14
 
 help:
 	@echo "make install       - install/sync dev dependencies"
-	@echo "make test          - run tests"
+	@echo "make test          - run tests on the project's Python"
+	@echo "make test-all      - run tests against every supported Python ($(PYTHON_VERSIONS))"
 	@echo "make cov           - run tests with coverage report"
 	@echo "make lint          - run ruff lint"
 	@echo "make format        - run ruff format (modifies files)"
@@ -16,13 +19,20 @@ help:
 	@echo "make bump-major    - bump major version (0.4.1 -> 1.0.0)"
 	@echo "make clean         - remove dist/"
 	@echo "make build         - clean and build wheel + sdist"
-	@echo "make publish       - build and publish to PyPI"
+	@echo "make publish       - test-all + readme-check + build, then publish to PyPI"
 
 install:
 	uv sync
 
 test:
 	uv run pytest
+
+test-all:
+	@for v in $(PYTHON_VERSIONS); do \
+		echo "==> Python $$v"; \
+		env -u VIRTUAL_ENV UV_PROJECT_ENVIRONMENT=.venvs/py$$v \
+			uv run --python $$v pytest -q || exit 1; \
+	done
 
 cov:
 	uv run pytest --cov=svg_helpers --cov-report=term-missing
@@ -39,14 +49,10 @@ check:
 	uv run cog --check README.md
 
 examples:
-	cd examples && uv run python japan.py
-	cd examples && uv run python banana.py
-	cd examples && uv run python cloud.py
-	cd examples && uv run python text.py
-	cd examples && uv run python animated.py
-	cd examples && uv run python banner.py
-	cd examples && uv run python make_for_inkscape.py
-	cd examples && uv run python jinja_templates.py
+	@cd examples && for f in *.py; do \
+		echo "==> $$f"; \
+		uv run python "$$f" || exit 1; \
+	done
 
 readme: examples
 	uv run cog -r README.md
@@ -72,5 +78,5 @@ clean:
 build: clean
 	uv build
 
-publish: readme-check build
+publish: test-all readme-check build
 	uv publish
