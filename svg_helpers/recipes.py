@@ -1,18 +1,28 @@
-"""Higher-level conveniences for common SVG patterns. Recipes are
-opinionated about how SVG looks (font metrics, layout, etc.) — unlike
-core, which is mechanism-only.
+"""Higher-level conveniences for common SVG patterns.
 
 Reach recipes via `element.recipes.add_<name>(...)` for the common
 add-to-parent case, or import the underlying `make_<name>` factory
 directly for explicit composition.
 
-Recipes are an opt-in grab-bag: idiosyncratic, may change, no stability
-promise. If you depend on one and want it stable, copy it into your
-project.
+Recipes are an opt-in grab-bag. If you depend on one and want it
+stable, copy it into your project.
+
+## Adding a recipe
+
+To add a recipe, create:
+
+1. A `make_<name>(...)` factory that returns an unattached `Element`.
+   Make leading parameters positional-only (`make_<name>(arg, /,
+   **attributes)`) so attribute kwargs can't collide with parameter
+   names.
+2. An `_RecipeAccessor.add_<name>` method that calls the factory and
+   appends the result to `self._parent`.
+
+NOTE: Recipes hardcode the base `Element` class, so a subclass that
+overrides `format_attribute_name` won't see it applied to recipe-built
+children.
 
 """
-
-from __future__ import annotations
 
 from typing import Literal
 

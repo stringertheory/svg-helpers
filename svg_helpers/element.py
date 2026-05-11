@@ -8,8 +8,8 @@ from svg_helpers.shapely_helpers import make_paths_from_shape
 
 # SVG elements whose inter-child whitespace is rendered as a literal
 # space character per the XML default whitespace rules. Indenting
-# inside one of these shifts visible text layout (e.g. a half-space
-# per chunk under text-anchor="middle"), so pretty-printing must leave
+# inside one of these shifts visible layout (e.g. a half-space per
+# chunk under text-anchor="middle"), so pretty-printing must leave
 # their contents untouched. From SVG 1.1 §10.10 ("Text content
 # elements") plus `foreignObject` (whose contents are non-SVG markup
 # where whitespace also matters).
@@ -282,8 +282,9 @@ class Element(ElementTree.Element):
         if pretty:
             # The custom indenter mutates text/tail in place. Snapshot
             # those two fields per node and restore in `finally` so
-            # serialization is non-destructive. Faster than deepcopy,
-            # but not thread-safe for concurrent reads of the same tree.
+            # that calling to_string doesn't change the tree. Saving
+            # like this is is faster than deepcopy, but not
+            # thread-safe for concurrent reads of the same tree.
             saved = [(el, el.text, el.tail) for el in self.iter()]
             try:
                 _indent_preserving_text(self)
@@ -335,7 +336,7 @@ class Element(ElementTree.Element):
             return
         # newline="" disables platform newline translation so saved
         # files use \n everywhere — Windows otherwise rewrites \n to \r\n
-        # on disk, producing cross-platform diff churn.
+        # on disk
         with open(filename, "w", encoding="utf-8", newline="") as outfile:
             outfile.write(content)
 
