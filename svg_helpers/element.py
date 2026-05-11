@@ -25,13 +25,17 @@ class Element(ElementTree.Element):
         """Replace attributes dictionary with a new one where
         attribute names (keys) and attribute values (values) have been
         formatted by the `format_attribute_name` and
-        `format_attribute_value` methods.
+        `format_attribute_value` methods. Attributes whose formatted
+        value is `None` are dropped.
 
         """
-        return {
-            self.format_attribute_name(k): self.format_attribute_value(v)
-            for k, v in attributes.items()
-        }
+        result = {}
+        for k, v in attributes.items():
+            formatted_value = self.format_attribute_value(v)
+            if formatted_value is None:
+                continue
+            result[self.format_attribute_name(k)] = formatted_value
+        return result
 
     @staticmethod
     def format_attribute_name(key: str) -> str:
@@ -46,13 +50,26 @@ class Element(ElementTree.Element):
         return key.rstrip("_").replace("_", "-")
 
     @staticmethod
-    def format_attribute_value(value: Any) -> str:
-        """Convert attribute values to string. For example, `10`
-        becomes `"10"`.
+    def format_attribute_value(value: Any) -> str | None:
+        """Convert attribute values to a string suitable for SVG output.
+
+        - `None` returns `None`; the caller drops the attribute. Handy
+          for building attribute sets conditionally:
+          `add_element("rect", stroke=None if outlined else "black")`.
+        - `bool` returns lowercase `"true"` / `"false"` (the XML/SVG
+          canonical form).
+        - Anything else is `str(value)`. The library does not validate
+          that the result is meaningful SVG: `float('nan')` and
+          `float('inf')` stringify as `"nan"` / `"inf"`, which most
+          renderers will ignore.
 
         Override the method to format attribute values differently.
 
         """
+        if value is None:
+            return None
+        if isinstance(value, bool):
+            return "true" if value else "false"
         return str(value)
 
     def add_element(self, tag_name: str, /, **attributes) -> Element:

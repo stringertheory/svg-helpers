@@ -336,3 +336,23 @@ def test_add_element_tag_name_as_attribute():
     svg = svg_helpers.make_svg(width=10, height=10)
     svg.add_element("rect", tag_name="trick")
     assert svg.find("rect").get("tag-name") == "trick"
+
+
+def test_none_attribute_is_dropped():
+    svg = svg_helpers.make_svg(width=10, height=10)
+    svg.add_element("rect", stroke=None, fill="red")
+    rect = svg.find("rect")
+    assert "stroke" not in rect.attrib
+    assert rect.get("fill") == "red"
+
+
+def test_bool_true_becomes_lowercase_true():
+    svg = svg_helpers.make_svg(width=10, height=10)
+    svg.add_element("animate", repeatCount=True)
+    assert svg.find("animate").get("repeatCount") == "true"
+
+
+def test_bool_false_becomes_lowercase_false():
+    svg = svg_helpers.make_svg(width=10, height=10)
+    svg.add_element("animate", repeatCount=False)
+    assert svg.find("animate").get("repeatCount") == "false"
