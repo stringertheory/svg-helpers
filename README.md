@@ -1,6 +1,7 @@
 # SVG helpers
 
 [![PyPI](https://img.shields.io/pypi/v/svg-helpers.svg)](https://pypi.org/project/svg-helpers/)
+[![tests](https://github.com/stringertheory/svg-helpers/actions/workflows/test.yml/badge.svg)](https://github.com/stringertheory/svg-helpers/actions/workflows/test.yml)
 
 Tools to help make [SVG](https://en.wikipedia.org/wiki/SVG) graphics
 with python. No dependencies.
