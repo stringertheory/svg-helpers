@@ -3,7 +3,7 @@
 [![PyPI](https://img.shields.io/pypi/v/svg-helpers.svg)](https://pypi.org/project/svg-helpers/)
 
 Tools to help make [SVG](https://en.wikipedia.org/wiki/SVG) graphics
-with python. No dependencies — safe to import just about anywhere.
+with python. No dependencies.
 
 ## Install
 
@@ -75,7 +75,7 @@ Underscores in attribute names become dashes (`stroke_width=1` →
 escape Python keywords (`class_="hi"` → `class="hi"`,
 `from_="0"` → `from="0"`).
 
-For attribute names that aren't valid Python identifiers at all
+For attribute names that aren't valid Python keyword arguments at all
 (e.g. `xlink:href`, `inkscape:groupmode`), pass them via `**` unpack
 or as an explicit `attrib=` dict. Both forms produce identical output:
 
@@ -170,15 +170,13 @@ svg.add_shape(big_polygon, precision=2, fill="red")
 ## Recipes
 
 The `svg_helpers.recipes` module is a grab-bag of higher-level helpers
-for patterns that come up enough to be worth reusing across projects
-(currently just multi-line text). They're reachable via
-`element.recipes.add_<name>(...)` for chaining ergonomics, or by
-importing the underlying `make_<name>` factory directly.
+for patterns that come up enough to be worth reusing. They're
+reachable via `element.recipes.add_<name>(...)`, or by importing the
+underlying `make_<name>` factory directly.
 
-Recipes are opinionated — they make assumptions about font metrics,
-layout, etc. — unlike core, which is mechanism-only. They may change
-or be removed; if you depend on one and want it stable, copy it into
-your project.
+Recipes should be considered less stable than the core: they may
+change or be removed. If you depend on one and want it stable, copy it
+into your project.
 
 `recipes.make_text` (and `parent.recipes.add_text`) lays out multi-line
 text using `<tspan>` children, with `vertical_align` of `"top"`,
@@ -207,9 +205,7 @@ svg.save("text.svg")
 
 ## Animation
 
-SVG supports animation via nested `<animate>`, `<animateMotion>`, and
-`<animateTransform>` elements. The library doesn't know about any of
-these — `add_element` accepts any tag, so it just works:
+Here's an example with animation:
 
 <!-- [[[cog example("animated", "Circle animated along a curved path") ]]] -->
 ```python
@@ -254,11 +250,9 @@ svg.save("animated.svg")
 
 ## Putting it together
 
-A capstone example, showing how weird SVG can get without the library
-getting in the way. This one combines `<defs>`, a `<linearGradient>`,
-a multi-primitive `<filter>` (drop shadow), an exemplar `<g>` reused
-via `<use>`, and an `<animateTransform>` — about a dozen SVG features
-the library has no special knowledge of, all working transparently.
+This example combines `<defs>`, a `<linearGradient>`, a `<filter>`
+(drop shadow), an exemplar `<g>` reused via `<use>`, and an
+`<animateTransform>`:
 
 <!-- [[[cog example("banner", "Banner with gradient, drop-shadow, and use'd rotating squares") ]]] -->
 ```python
@@ -335,9 +329,9 @@ More examples are available in
 
 ## Alternatives
 
-This library is really just a few functions that wrap the standard
-library `xml.etree`. It doesn't check that what you produce is
-actually valid SVG.
+This library is basically just a wrapper around the standard library
+`xml.etree`. It doesn't check that what you produce is actually valid
+SVG.
 
 If you want something more fully-featured:
 
@@ -353,8 +347,6 @@ If you want something more fully-featured:
   directly.
 - No dependencies. Can import just about anywhere, and other projects
   can import it without importing fifteen billion other packages.
-- Core stays mechanism, not policy. Opinionated helpers live in
-  `svg_helpers.recipes` with a different stability promise.
 
 ## License
 
